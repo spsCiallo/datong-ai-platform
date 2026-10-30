@@ -69,7 +69,7 @@
 
 - `tools/build.ps1` 通过，`dist/datong-cloud-server.jar` 24.5 MB。
 - `node tools/smoke-test.js`：**通过 160 项，失败 0 项**。
-- `node tools/browser-check.js`：**通过 73 项，失败 0 项**（截图落在 `docs/screenshots/`）。
+- `node tools/browser-check.js`：**通过 72 项，失败 0 项**（截图落在 `docs/screenshots/`）。
 - `node tools/deploy-config-test.js`：通过 36 项，失败 0 项。
 - `node tools/normalize-scripts.js --check`：通过。
 - 另用 headless Chrome 探针逐项复核（脚本是临时的，未入库）：管理员服务器/个性化设置
