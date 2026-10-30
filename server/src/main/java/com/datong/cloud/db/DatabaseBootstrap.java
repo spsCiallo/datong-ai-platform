@@ -1,0 +1,302 @@
+package com.datong.cloud.db;
+
+import com.datong.cloud.config.AppProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.stereotype.Component;
+
+import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 数据库自举 —— 「一键部署」最关键的一块。
+ *
+ * <p>服务端启动时按顺序完成四件事，任何一步都能重复执行：
+ * <ol>
+ *   <li>连到 MySQL（不指定库），{@code CREATE DATABASE IF NOT EXISTS} 建库；</li>
+ *   <li>执行 {@code db/schema.sql}（全部是 {@code CREATE TABLE IF NOT EXISTS}，只补缺失的表）；</li>
+ *   <li>执行 {@code db/seed.sql}（全部是 {@code INSERT IGNORE}，已有数据不会被覆盖）；</li>
+ *   <li>打印一行连接摘要，方便出问题时第一时间看出连的是哪个库。</li>
+ * </ol>
+ *
+ * <p>整个过程不需要 {@code mysql} 命令行客户端，也不需要用户手工执行 SQL ——
+ * 这是本项目能做到「双击即用」的根本原因。
+ */
+@Component
+public class DatabaseBootstrap {
+
+    private static final Logger log = LoggerFactory.getLogger(DatabaseBootstrap.class);
+
+    private final AppProperties props;
+
+    /**
+     * 口令自动探测候选表。
+     *
+     * <p>一键部署绕不过去的一件事是数据库口令 —— 它只有使用者自己知道。
+     * 先按配置里的口令连一次，连不上就依次试这些常见口令；试通了就把口令写回配置对象
+     * （后面创建连接池时用的就是这个值），于是绝大多数教学环境（空口令 / 123456 / root）
+     * 都能真正做到双击即用。全都试不通也没关系：给出明确的中文指引，改一行配置即可。
+     */
+    private static final String[] PASSWORD_CANDIDATES = {
+            "", "root", "123456", "12345678", "1234", "123456789", "admin", "password", "mysql", "88888888"
+    };
+
+    /** 启动摘要，供 PC 管理后台「服务器管理」页展示 */
+    private String summary = "未初始化";
+
+    /** true 表示口令是程序自动探测出来的（不是配置文件里写的） */
+    private boolean passwordDetected = false;
+
+    public DatabaseBootstrap(AppProperties props) {
+        this.props = props;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public boolean isPasswordDetected() {
+        return passwordDetected;
+    }
+
+    @PostConstruct
+    public void init() {
+        AppProperties.Database db = props.getDatabase();
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // ⓪ 口令探测：配置里的口令连不通时，尝试一批常见口令
+            if (!canConnect(db, db.getPassword())) {
+                String found = probePassword(db);
+                if (found != null) {
+                    log.info("[db] 配置的 MySQL 口令连不通，已自动探测到可用口令，本次启动使用它");
+                    db.setPassword(found);
+                    passwordDetected = true;
+                }
+            }
+
+            // ① 建库。库不存在时 MySQL 会拒绝连接到库，所以先用「不带库名」的连接串
+            try (Connection conn = DriverManager.getConnection(db.serverUrl(), db.getUser(), db.getPassword());
+                 Statement st = conn.createStatement()) {
+                st.executeUpdate("CREATE DATABASE IF NOT EXISTS `" + db.getName()
+                        + "` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci");
+            }
+
+            try (Connection conn = DriverManager.getConnection(db.databaseUrl(), db.getUser(), db.getPassword())) {
+                if (db.isResetOnStart()) {
+                    log.warn("[db] 已开启 reset-on-start，正在清空全部业务表……");
+                    dropAll(conn);
+                }
+
+                // ② 建表（幂等）
+                runScript(conn, "db/schema.sql");
+
+                // ②.5 补列（幂等）：老库里的账号表是 v1 建的，没有 avatar 列。
+                //      schema.sql 用的是 CREATE TABLE IF NOT EXISTS，改它不会影响已存在的表，
+                //      所以必须在这里单独 ALTER 一次，否则老用户升级后改头像会直接报错。
+                ensureColumn(conn, "users", "avatar", "TEXT NULL COMMENT '自定义头像 dataURL'");
+                ensureColumn(conn, "merchants", "avatar", "TEXT NULL COMMENT '自定义头像 dataURL'");
+                ensureColumn(conn, "admins", "avatar", "TEXT NULL COMMENT '自定义头像 dataURL'");
+                ensureColumn(conn, "activities", "capacity", "INT NULL DEFAULT 30 COMMENT '可预约人数上限'");
+                // 多图：详情页图集与点位轮播都读这一列。老库自动补列，内容为空时前端回落到 cover。
+        ensureColumn(conn, "spots", "images", "JSON NULL COMMENT '多图数组'");
+        ensureColumn(conn, "products", "images", "JSON NULL COMMENT '多图数组'");
+                // 虚拟地图坐标（0-1000 × 0-700）与活动图集：老库没有这三组列，
+                // 而 schema.sql 的 CREATE TABLE IF NOT EXISTS 改不动已存在的表，
+                // 所以在这里逐个幂等补列，否则老库一读 mapX 就整张表报错。
+                ensureColumn(conn, "spots", "mapX",
+                        "INT NULL COMMENT '虚拟地图横坐标 0-1000'");
+                ensureColumn(conn, "spots", "mapY",
+                        "INT NULL COMMENT '虚拟地图纵坐标 0-700'");
+                ensureColumn(conn, "products", "mapX",
+                        "INT NULL COMMENT '虚拟地图横坐标 0-1000'");
+                ensureColumn(conn, "products", "mapY",
+                        "INT NULL COMMENT '虚拟地图纵坐标 0-700'");
+                ensureColumn(conn, "activities", "images", "JSON NULL COMMENT '多图数组'");
+                ensureColumn(conn, "activities", "mapX",
+                        "INT NULL COMMENT '虚拟地图横坐标 0-1000'");
+                ensureColumn(conn, "activities", "mapY",
+                        "INT NULL COMMENT '虚拟地图纵坐标 0-700'");
+        ensureColumn(conn, "spots", "voice",
+                        "VARCHAR(16) NULL DEFAULT 'auto' COMMENT '讲解语音包：auto/male/female'");
+                ensureColumn(conn, "products", "timeSlots",
+                        "JSON NULL COMMENT '可预约场次/时段数组'");
+                ensureColumn(conn, "products", "roomTypes",
+                        "JSON NULL COMMENT '民宿房型数组'");
+                ensureColumn(conn, "merchants", "suspendUntil",
+                        "VARCHAR(32) NULL COMMENT '临时停用截止时间'");
+                ensureColumn(conn, "merchants", "suspendReason",
+                        "VARCHAR(255) NULL COMMENT '停用原因'");
+                ensureColumn(conn, "merchants", "settledAmount",
+                        "DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '已结算金额汇总'");
+
+                // 订单：拒绝协商 + 物流 + 预约扩展 + 退款（全部幂等补列，老库自动升级）
+                ensureColumn(conn, "orders", "rejectReason", "TEXT NULL COMMENT '商家拒绝原因'");
+                ensureColumn(conn, "orders", "rejectStatus",
+                        "VARCHAR(24) NULL COMMENT 'waiting_buyer/buyer_agreed/buyer_disagreed'");
+                ensureColumn(conn, "orders", "rejectedAt", "VARCHAR(32) NULL COMMENT '拒绝时间'");
+                ensureColumn(conn, "orders", "buyerFeedback", "TEXT NULL COMMENT '买家协商意见'");
+                ensureColumn(conn, "orders", "feedbackAt", "VARCHAR(32) NULL COMMENT '买家反馈时间'");
+                ensureColumn(conn, "orders", "logisticsCompany", "VARCHAR(64) NULL COMMENT '快递公司'");
+                ensureColumn(conn, "orders", "trackingNo", "VARCHAR(64) NULL COMMENT '运单号'");
+                ensureColumn(conn, "orders", "logisticsStatus", "VARCHAR(32) NULL COMMENT '物流状态'");
+                ensureColumn(conn, "orders", "logisticsUpdatedAt", "VARCHAR(32) NULL COMMENT '物流更新时间'");
+                ensureColumn(conn, "orders", "shippedAt", "VARCHAR(32) NULL COMMENT '发货时间'");
+                ensureColumn(conn, "orders", "bookingSlot", "VARCHAR(64) NULL COMMENT '预约场次/时段'");
+                ensureColumn(conn, "orders", "checkOutDate", "VARCHAR(16) NULL COMMENT '民宿离店日期'");
+                ensureColumn(conn, "orders", "roomType", "VARCHAR(64) NULL COMMENT '民宿房型'");
+                ensureColumn(conn, "orders", "completedAt", "VARCHAR(32) NULL COMMENT '完成时间'");
+                ensureColumn(conn, "orders", "refundAmount", "DECIMAL(10,2) NULL COMMENT '退款金额'");
+                ensureColumn(conn, "orders", "refundedAt", "VARCHAR(32) NULL COMMENT '退款时间'");
+                ensureColumn(conn, "orders", "refundNote", "VARCHAR(255) NULL COMMENT '退款说明'");
+
+                // ③ 灌演示数据（幂等）
+                if (db.isSeedOnStart()) {
+                    runScript(conn, "db/seed.sql");
+                }
+
+                List<String> counts = tableCounts(conn);
+                summary = String.format("MySQL %s:%d/%s（账号 %s）· %s%s",
+                        db.getHost(), db.getPort(), db.getName(), db.getUser(), String.join(" ", counts),
+                        passwordDetected ? " · 口令为自动探测" : "");
+                log.info("[db] 存储后端：{}", summary);
+            }
+        } catch (SQLException e) {
+            log.error("""
+
+                    ============================================================
+                     [数据库连接失败] 无法连接 MySQL {}({}) 库「{}」
+                     请按顺序检查：
+                       1. MySQL 服务是否已启动（Windows：Win+R 输入 services.msc，找 MySQL 服务）
+                       2. 端口是否正确（当前配置 {}）
+                       3. 账号口令是否正确（当前账号 {}，已自动尝试常见口令但都没连上）
+                       4. 口令不对时：改项目根目录下的 config/application.yml，把
+                          app.database.password 改成你本机 MySQL 的口令后重新启动
+                    原始错误：{}
+                    ============================================================
+                    """, db.getHost(), db.getPort(), db.getName(), db.getPort(), db.getUser(), e.getMessage());
+            throw new IllegalStateException("MySQL 连接失败：" + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("[db] 数据库初始化失败：{}", e.getMessage());
+            throw new IllegalStateException("数据库初始化失败：" + e.getMessage(), e);
+        }
+    }
+
+    /** 试连一次，只看能不能连上（不执行任何语句） */
+    private boolean canConnect(AppProperties.Database db, String password) {
+        try (Connection ignored = DriverManager.getConnection(db.serverUrl(), db.getUser(), password)) {
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** 依次尝试常见口令，返回第一个能连上的；都不行返回 null */
+    private String probePassword(AppProperties.Database db) {
+        for (String candidate : PASSWORD_CANDIDATES) {
+            if (candidate.equals(db.getPassword())) {
+                continue; // 已经试过了
+            }
+            if (canConnect(db, candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 幂等补列：列已存在就什么都不做，不存在才 ALTER。
+     * MySQL 没有 {@code ADD COLUMN IF NOT EXISTS}，只能先查 information_schema。
+     */
+    private void ensureColumn(Connection conn, String table, String column, String definition) {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT COUNT(*) FROM information_schema.COLUMNS "
+                        + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?")) {
+            ps.setString(1, table);
+            ps.setString(2, column);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return;
+                }
+            }
+        } catch (SQLException e) {
+            // 查不到（非 MySQL / 权限不足）就别硬改，交给运行时报错更清楚
+            log.warn("[db] 检查 {} . {} 是否存在失败：{}", table, column, e.getMessage());
+            return;
+        }
+        try (Statement st = conn.createStatement()) {
+            st.executeUpdate("ALTER TABLE `" + table + "` ADD COLUMN `" + column + "` " + definition);
+            log.info("[db] 已为 {} 补上 {} 列", table, column);
+        } catch (SQLException e) {
+            log.warn("[db] 为 {} 补 {} 列失败（可能有并发启动）：{}", table, column, e.getMessage());
+        }
+    }
+
+    /** 执行 classpath 下的 SQL 脚本 */
+    private void runScript(Connection conn, String classpath) {
+        ClassPathResource resource = new ClassPathResource(classpath);
+        if (!resource.exists()) {
+            log.warn("[db] 找不到脚本 {}，已跳过", classpath);
+            return;
+        }
+        try {
+            ScriptUtils.executeSqlScript(conn, new EncodedResource(resource, StandardCharsets.UTF_8));
+            log.info("[db] 已执行 {}", classpath);
+        } catch (Exception e) {
+            // 脚本是幂等的，失败通常是「表已存在/数据已存在」这类可忽略情况，
+            // 但也不能静默：打出来让人看得见，服务继续启动
+            log.warn("[db] 执行 {} 时出现问题（不影响已有数据）：{}", classpath, rootMessage(e));
+        }
+    }
+
+    private void dropAll(Connection conn) throws SQLException {
+        // 按依赖倒序删，避免外键类问题（本库没有外键，保留顺序只是为了可读）
+        String[] tables = {"settlements", "notifications", "orderLogs", "reports", "chatTyping",
+                "chatMessages", "settings", "sessions", "knowledge", "activityBookings", "activities",
+                "orders", "products", "stamps", "spots", "admins", "merchants", "users"};
+        try (Statement st = conn.createStatement()) {
+            st.executeUpdate("SET FOREIGN_KEY_CHECKS = 0");
+            for (String t : tables) {
+                st.executeUpdate("DROP TABLE IF EXISTS `" + t + "`");
+            }
+            st.executeUpdate("SET FOREIGN_KEY_CHECKS = 1");
+        }
+    }
+
+    /** 各表记录数，启动日志里直接看一眼就知道数据在不在 */
+    private List<String> tableCounts(Connection conn) {
+        String[] tables = {"users", "merchants", "spots", "products", "orders", "knowledge"};
+        List<String> out = new ArrayList<>();
+        for (String t : tables) {
+            try (Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM `" + t + "`")) {
+                if (rs.next()) {
+                    out.add(t + "=" + rs.getInt(1));
+                }
+            } catch (SQLException ignored) {
+                // 表可能还没建出来，忽略
+            }
+        }
+        return out;
+    }
+
+    private String rootMessage(Throwable e) {
+        Throwable t = e;
+        while (t.getCause() != null && t.getCause() != t) {
+            t = t.getCause();
+        }
+        return t.getMessage();
+    }
+}

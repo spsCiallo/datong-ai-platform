@@ -1,0 +1,95 @@
+package com.datong.cloud.controller;
+
+import com.datong.cloud.common.R;
+import com.datong.cloud.config.AppProperties;
+import com.datong.cloud.service.DiscoveryService;
+import com.datong.cloud.service.ServerService;
+import com.datong.cloud.service.SettingService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 服务信息接口（公开）。
+ *
+ * <p>三端页面加载后第一件事就是调它，拿到平台名称、标语与入口地址。
+ * 注意这里下发的地址是「只读的展示信息」：游客端与商户工作台拿到的只是当前访问地址，
+ * 真正能修改服务器地址的入口只有 PC 管理后台。
+ */
+@RestController
+@RequestMapping("/api/server")
+public class ServerController {
+
+    private final ServerService server;
+    private final SettingService settings;
+    private final DiscoveryService discovery;
+    private final AppProperties props;
+
+    public ServerController(ServerService server, SettingService settings,
+                            DiscoveryService discovery, AppProperties props) {
+        this.server = server;
+        this.settings = settings;
+        this.discovery = discovery;
+        this.props = props;
+    }
+
+    /** 服务器信息 + 三端入口 + 手机端二维码 */
+    @GetMapping("/info")
+    public Map<String, Object> info() {
+        Map<String, Object> links = server.links();
+        return R.ok(
+                "service", "datong-cloud",
+                "name", settings.get("site.name", props.getName()),
+                "shortName", settings.get("site.shortName", props.getShortName()),
+                "slogan", settings.get("site.slogan", ""),
+                "announcement", settings.get("site.announcement", ""),
+                "version", props.getVersion(),
+                "ip", links.get("ip"),
+                "port", links.get("port"),
+                "baseUrl", links.get("base"),
+                "localUrl", links.get("localUrl"),
+                "adminUrl", links.get("adminUrl"),
+                "merchantUrl", links.get("merchantUrl"),
+                "mobileUrl", links.get("mobileUrl"),
+                "qrMobile", server.mobileQrDataUrl(),
+                "interfaces", server.interfaces(),
+                "discovery", discovery.status(),
+                // 语音讲解的音色策略：三端共用，客户端据此挑本机可用的最自然音色
+                "speech", speechConfig(),
+                "uptimeSec", server.uptimeSeconds());
+    }
+
+    /** 把 app.speech.* 摊平成前端好用的对象；键名用前端习惯的驼峰 */
+    private Map<String, Object> speechConfig() {
+        AppProperties.Speech s = props.getSpeech();
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("enabled", s.isEnabled());
+        m.put("voice", s.getVoice());
+        m.put("rate", s.getRate());
+        m.put("pitch", s.getPitch());
+        m.put("gapMs", s.getGapMs());
+        m.put("autoPlay", s.isAutoPlay());
+        return m;
+    }
+
+    /**
+     * 下发给前端的公开参数（平台名称、标语、公告、是否允许注册）。
+     * 刻意不含 AI 密钥与服务器内部配置 —— 游客端不需要、也不应该看到这些。
+     */
+    @GetMapping("/settings")
+    public Map<String, Object> publicSettings() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("settings", settings.publicConfig());
+        out.put("categories", com.datong.cloud.common.Dict.CATEGORY_TEXT);
+        out.put("statusText", com.datong.cloud.common.Dict.STATUS_TEXT);
+        out.put("merchantTypes", com.datong.cloud.common.Dict.MERCHANT_TYPES);
+        out.put("preferences", List.copyOf(new java.util.TreeSet<>(List.of(
+                "非遗", "手工", "农事", "亲子", "美食", "摄影", "历史", "休闲"))));
+        return out;
+    }
+}

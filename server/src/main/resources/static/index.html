@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>大同云 · 大同村农商文旅智慧平台</title>
+  <!-- 显式声明图标：不写这一行，浏览器会去请求 /favicon.ico，控制台会留下一条 404 -->
+  <link rel="icon" type="image/svg+xml" href="./assets/img/favicon.svg">
+  <link rel="stylesheet" href="./assets/css/app.css">
+  <link rel="stylesheet" href="./assets/css/themes.css">
+  <link rel="stylesheet" href="./assets/css/entry.css">
+  <script src="./assets/js/theme.js"></script>
+</head>
+<body>
+<div class="page">
+  <div class="bg">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+  <header class="top">
+    <div class="brand">
+      <img class="mark-logo" src="./assets/img/logo.svg" alt="大同云">
+      <div>
+        <h1 id="platform-name">大同村农商文旅智慧平台</h1>
+        <div class="sub" id="platform-slogan">塞上田园 · 黄花台地 · 农商文旅一站通</div>
+      </div>
+    </div>
+    <div class="status">
+      <span class="dot ok anim-ring"></span>
+      <span id="status-text">服务运行中</span>
+      <span class="mono" id="status-uptime"></span>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- 公告（管理后台可配） -->
+    <div class="notice" id="notice-box" hidden>
+      <i>公告</i><span id="notice"></span>
+    </div>
+
+    <section class="ends">
+      <article class="end-card anim-up" style="--i:0">
+        <div class="end-head">
+          <span class="badge">01</span>
+          <div>
+            <h3>游客端</h3>
+            <div class="dim">电脑手机共用 · 响应式 H5</div>
+          </div>
+        </div>
+        <div class="end-body">
+          <ul>
+            <li>14 个点位打卡集章，语音讲解</li>
+            <li>农产商城下单、研学民宿预约</li>
+            <li><b>AI 文旅助手</b>：知识库问答与行程规划</li>
+          </ul>
+          <div class="qr-wrap">
+            <img id="qr-mobile" alt="游客端二维码">
+            <div class="qr-side">
+              <div class="qr-tip">手机扫码</div>
+              <a class="link mono" id="mobile-url" target="_blank" href="#">—</a>
+              <div class="dim tiny">扫码即进，电脑打开同一地址也能用</div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="end-card anim-up" style="--i:1">
+        <div class="end-head">
+          <span class="badge accent">02</span>
+          <div>
+            <h3>商户工作台</h3>
+            <div class="dim">电脑浏览器 H5 页面</div>
+          </div>
+        </div>
+        <div class="end-body">
+          <ul>
+            <li>商品上架 / 下架 / 编辑</li>
+            <li>订单接单、拒绝协商、发货</li>
+            <li>营收看板与 <b>AI 商品文案</b></li>
+          </ul>
+          <div class="enter">
+            <a class="btn" id="merchant-url" data-keep-text href="/merchant/" target="_blank">进入商户工作台</a>
+            <div class="dim tiny mono" id="merchant-url-text"></div>
+            <div class="dim tiny">演示账号 zhangmm / 123456</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="end-card anim-up" style="--i:2">
+        <div class="end-head">
+          <span class="badge deep">03</span>
+          <div>
+            <h3>PC 管理后台</h3>
+            <div class="dim">Vue + ElementUI · 平台与服务器管理</div>
+          </div>
+        </div>
+        <div class="end-body">
+          <ul>
+            <li>商家 / 买家 / 订单 / 商品总览管理</li>
+            <li>内容数据与 AI 知识库维护</li>
+            <li><b>服务器状态与连接配置</b>（其他端地址在这里统一设置）</li>
+          </ul>
+          <div class="enter">
+            <a class="btn primary" id="admin-url" data-keep-text href="/admin/" target="_blank">进入 PC 管理后台</a>
+            <div class="dim tiny mono" id="admin-url-text"></div>
+            <div class="dim tiny">演示账号 admin / admin123</div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="info">
+      <div class="info-card">
+        <h4>服务器信息</h4>
+        <dl>
+          <dt>局域网地址</dt><dd class="mono" id="info-ip">—</dd>
+          <dt>服务端口</dt><dd class="mono" id="info-port">—</dd>
+          <dt>本机访问</dt><dd class="mono" id="info-local">—</dd>
+          <dt>平台版本</dt><dd class="mono" id="info-version">—</dd>
+        </dl>
+      </div>
+      <div class="info-card">
+        <h4>本机网卡</h4>
+        <div id="iface-list" class="iface-list"></div>
+        <p class="dim tiny">带「虚拟」标记的是 VMware / WSL 之类，手机通常访问不到，可到管理后台手工指定地址。</p>
+      </div>
+      <div class="info-card">
+        <h4>连接说明</h4>
+        <ol class="steps">
+          <li>手机与电脑连<b>同一个 WiFi</b>；</li>
+          <li>手机扫上面的二维码，或在浏览器输入局域网地址 + <span class="mono">/visitor/</span>；</li>
+          <li>游客端是<b>一套响应式界面</b>，电脑浏览器打开会自动切换为宽屏布局；</li>
+          <li>连不上时检查 Windows 防火墙是否放行 Java 进程。</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>大同云 · 课程演示项目</span>
+    <span class="dim">SpringBoot + MySQL · Vue + ElementUI · 响应式 H5</span>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    fetch('api/server/info').then(function (r) { return r.json(); }).then(function (d) {
+      if (!d || !d.ok) { return; }
+      document.title = d.name + ' · 入口';
+      setText('platform-name', d.name);
+      setText('platform-slogan', d.slogan || '塞上田园 · 黄花台地 · 农商文旅一站通');
+      setText('info-ip', d.ip);
+      setText('info-port', d.port);
+      setText('info-local', d.localUrl);
+      setText('info-version', 'v' + d.version);
+      setText('status-uptime', '已运行 ' + Math.floor((d.uptimeSec || 0) / 60) + ' 分钟');
+
+      var qr = document.getElementById('qr-mobile');
+      if (d.qrMobile) { qr.src = d.qrMobile; } else { qr.style.display = 'none'; }
+      href('mobile-url', d.mobileUrl);
+      href('merchant-url', d.merchantUrl);
+      href('admin-url', d.adminUrl);
+
+      if (d.announcement) {
+        setText('notice', d.announcement);
+        document.getElementById('notice-box').hidden = false;
+      }
+
+      var box = document.getElementById('iface-list');
+      box.innerHTML = (d.interfaces || []).map(function (i) {
+        return '<div class="iface">'
+          + '<span class="mono ip">' + i.ip + '</span>'
+          + '<span class="name">' + i.name + '</span>'
+          + '<span class="tag ' + (i.virtual ? '' : 'ok') + '">' + (i.virtual ? '虚拟' : '物理') + '</span>'
+          + '</div>';
+      }).join('') || '<div class="dim">未探测到可用网卡</div>';
+    }).catch(function () {
+      setText('status-text', '无法获取服务信息');
+    });
+
+    function setText(id, text) {
+      var el = document.getElementById(id);
+      if (el && text) { el.textContent = text; }
+    }
+    function href(id, url) {
+      var el = document.getElementById(id);
+      if (!el || !url) { return; }
+      el.href = url;
+      // 按钮类链接保留中文文案，URL 另起一行展示（id + '-text'）
+      if (!el.hasAttribute('data-keep-text')) { el.textContent = url; }
+      var text = document.getElementById(id + '-text');
+      if (text) { text.textContent = url; }
+    }
+  })();
+</script>
+</body>
+</html>

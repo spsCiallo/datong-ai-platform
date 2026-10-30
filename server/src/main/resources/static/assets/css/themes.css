@@ -1,0 +1,235 @@
+/* ============================================================================
+ *  四主题令牌（三端共用）—— red / cyan / dark / blue
+ *
+ *  red 是默认主题，令牌写在 app.css 的 :root 里，这里不再重复。
+ *  cyan / dark / blue 通过 <html data-theme="..."> 覆盖令牌实现整体换装。
+ *
+ *  深色主题额外覆盖了「写死浅色」的组件（卡片、弹窗、表格、输入框、
+ *  Element UI 弹层），避免出现「卡片黑了、弹窗还白」的割裂感。
+ * ========================================================================== */
+
+/* ------------------------------- 青瓷 cyan ------------------------------- */
+html[data-theme="cyan"] {
+  --bg: #F2F7F7;
+  --surface: #FFFFFF;
+  --surface-2: #F7FBFB;
+  --surface-3: #E6F0F0;
+  --line: #D7E6E6;
+  --line-strong: #BFD4D4;
+
+  --text: #14282A;
+  --text-2: #4E6668;
+  --text-3: #8AA0A1;
+
+  --brand: #0E7C86;
+  --brand-2: #14A3AD;
+  --brand-deep: #0A5A62;
+  --brand-soft: #E6F6F7;
+  --brand-line: #B8E2E5;
+
+  --accent: #C77B1F;
+  --accent-soft: #FBF0DC;
+
+  --warn: #B07A18;
+  --warn-soft: #FCF4E2;
+  --ok: #1F7A5C;
+  --ok-soft: #E5F5EE;
+  --info: #2563A8;
+  --info-soft: #E8F1FA;
+  --danger: #B33A3A;
+  --danger-soft: #FBECEC;
+
+  --shadow-sm: 0 1px 2px rgba(20, 40, 42, .05);
+  --shadow: 0 1px 2px rgba(20, 40, 42, .05), 0 6px 20px rgba(20, 40, 42, .06);
+  --shadow-lg: 0 4px 12px rgba(20, 40, 42, .07), 0 18px 44px rgba(20, 40, 42, .10);
+}
+
+html[data-theme="cyan"] .side {
+  background: linear-gradient(180deg, #083D42 0%, #0E7C86 60%, #12A0AA 100%);
+}
+html[data-theme="cyan"] ::-webkit-scrollbar-thumb { background: #B7CDCD; }
+html[data-theme="cyan"] ::-webkit-scrollbar-thumb:hover { background: #9BB8B8; }
+
+/* ------------------------------- 靛蓝 blue ------------------------------- */
+html[data-theme="blue"] {
+  --bg: #F3F5FB;
+  --surface: #FFFFFF;
+  --surface-2: #F8FAFD;
+  --surface-3: #E8EDF7;
+  --line: #DDE3F0;
+  --line-strong: #C5CEE4;
+
+  --text: #1A2238;
+  --text-2: #4A5570;
+  --text-3: #8B94AB;
+
+  --brand: #1D4ED8;
+  --brand-2: #3B82F6;
+  --brand-deep: #153AA8;
+  --brand-soft: #E8F0FE;
+  --brand-line: #C3D7F8;
+
+  --accent: #C77B1F;
+  --accent-soft: #FBF0DC;
+
+  --warn: #B07A18;
+  --warn-soft: #FCF4E2;
+  --ok: #1F7A5C;
+  --ok-soft: #E5F5EE;
+  --info: #0EA5A5;
+  --info-soft: #E6FAFA;
+  --danger: #B33A3A;
+  --danger-soft: #FBECEC;
+
+  --shadow-sm: 0 1px 2px rgba(26, 34, 56, .05);
+  --shadow: 0 1px 2px rgba(26, 34, 56, .05), 0 6px 20px rgba(26, 34, 56, .07);
+  --shadow-lg: 0 4px 12px rgba(26, 34, 56, .08), 0 18px 44px rgba(26, 34, 56, .12);
+}
+
+html[data-theme="blue"] .side {
+  background: linear-gradient(180deg, #10245C 0%, #1D4ED8 60%, #2E6BF0 100%);
+}
+html[data-theme="blue"] ::-webkit-scrollbar-thumb { background: #C3CCE0; }
+html[data-theme="blue"] ::-webkit-scrollbar-thumb:hover { background: #A8B4CC; }
+
+/* ------------------------------- 墨夜 dark -------------------------------
+   底色用带一点暖味的墨黑，不用纯黑；
+   主色提亮（朱砂 → 珊瑚）保证深底对比度；
+   文字用暖白而非纯白，长时间阅读不刺眼。 */
+html[data-theme="dark"] {
+  --bg: #171412;
+  --surface: #1F1B18;
+  --surface-2: #242019;
+  --surface-3: #2B2620;
+  --line: #352E27;
+  --line-strong: #4A4038;
+
+  --text: #F0E9E4;
+  --text-2: #B8ABA1;
+  --text-3: #8A7D74;
+
+  --brand: #E86A5E;
+  --brand-2: #F2837A;
+  --brand-deep: #F5A39B;
+  --brand-soft: #3A211E;
+  --brand-line: #5C332E;
+
+  --accent: #E0A45C;
+  --accent-soft: #3A2E1A;
+
+  --warn: #D8A33C;
+  --warn-soft: #3A2F1A;
+  --ok: #4FC08A;
+  --ok-soft: #1C3628;
+  --info: #5C9BE0;
+  --info-soft: #1B2A3A;
+  --danger: #E0685F;
+  --danger-soft: #3A1E1C;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .28);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .24), 0 6px 20px rgba(0, 0, 0, .32);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, .30), 0 18px 44px rgba(0, 0, 0, .44);
+}
+
+html[data-theme="dark"] { color-scheme: dark; }
+
+html[data-theme="dark"] .side {
+  background: linear-gradient(180deg, #1A1210 0%, #2A1B18 60%, #3A221E 100%);
+}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #4A4038; }
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #5C5148; }
+
+/* 浏览器原生控件与 H5 大底色 */
+html[data-theme="dark"] body,
+html[data-theme="dark"] .screen { background: var(--bg); }
+html[data-theme="dark"] .screen { box-shadow: 0 0 0 1px var(--line); }
+@media (min-width: 620px) {
+  html[data-theme="dark"] body { background: #100E0C; }
+}
+
+/* 卡片、抽屉、底部栏、Tab 栏：默认白底的地方统一走 surface */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .drawer,
+html[data-theme="dark"] .modal-card,
+html[data-theme="dark"] .bottom-bar,
+html[data-theme="dark"] .tabbar,
+html[data-theme="dark"] .chat-shell,
+html[data-theme="dark"] .chat-input,
+html[data-theme="dark"] .el-dialog,
+html[data-theme="dark"] .el-drawer,
+html[data-theme="dark"] .el-card,
+html[data-theme="dark"] .el-popover,
+html[data-theme="dark"] .el-message,
+html[data-theme="dark"] .el-notification,
+html[data-theme="dark"] .el-dropdown-menu,
+html[data-theme="dark"] .el-picker-panel,
+html[data-theme="dark"] .el-select-dropdown,
+html[data-theme="dark"] .el-date-table,
+html[data-theme="dark"] .el-month-table,
+html[data-theme="dark"] .el-year-table {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* 顶栏毛玻璃在深色下要换成深色玻璃，否则会发灰发白 */
+html[data-theme="dark"] .topbar {
+  background: rgba(23, 20, 18, .88);
+  border-bottom-color: var(--line);
+}
+
+/* Element UI 表格 / 输入框 / 分页 */
+html[data-theme="dark"] .el-table {
+  background: var(--surface);
+  color: var(--text);
+}
+html[data-theme="dark"] .el-table tr,
+html[data-theme="dark"] .el-table th.el-table__cell,
+html[data-theme="dark"] .el-table td.el-table__cell {
+  background: var(--surface);
+  color: var(--text);
+  border-bottom-color: var(--line);
+}
+html[data-theme="dark"] .el-table th.el-table__cell { background: var(--surface-2) !important; }
+html[data-theme="dark"] .el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
+  background: var(--brand-soft);
+}
+html[data-theme="dark"] .el-table::before,
+html[data-theme="dark"] .el-table__fixed::before { background-color: var(--line); }
+
+html[data-theme="dark"] .el-input__inner,
+html[data-theme="dark"] .el-textarea__inner {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+html[data-theme="dark"] .el-input__inner::placeholder,
+html[data-theme="dark"] .el-textarea__inner::placeholder { color: var(--text-3); }
+
+html[data-theme="dark"] .el-dialog__title,
+html[data-theme="dark"] .el-drawer__title { color: var(--text); }
+html[data-theme="dark"] .el-dialog__body { color: var(--text); }
+
+html[data-theme="dark"] .el-descriptions-item__label,
+html[data-theme="dark"] .el-form-item__label { color: var(--text-2) !important; }
+
+html[data-theme="dark"] .el-tabs__item { color: var(--text-2); }
+html[data-theme="dark"] .el-tabs__item.is-active { color: var(--brand); }
+
+html[data-theme="dark"] .el-dropdown-menu__item { color: var(--text); }
+html[data-theme="dark"] .el-dropdown-menu__item:hover {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+html[data-theme="dark"] .el-pagination button,
+html[data-theme="dark"] .el-pager li { background: var(--surface); color: var(--text-2); }
+html[data-theme="dark"] .el-pager li.active { color: var(--brand); }
+
+html[data-theme="dark"] .el-loading-mask { background: rgba(23, 20, 18, .72); }
+
+/* 聊天气泡：深色下买家气泡用品牌深色，商家气泡用 surface-2 */
+html[data-theme="dark"] .bubble-me { background: var(--brand); color: #fff; }
+html[data-theme="dark"] .bubble-peer { background: var(--surface-2); color: var(--text); }
+
+/* 图片兜底：深色下不要闪白块 */
+html[data-theme="dark"] img { background: var(--surface-2); }

@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+<defs><linearGradient id="avadmin" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1D4ED8"/><stop offset="100%" stop-color="#8E1E14"/></linearGradient></defs><rect width="96" height="96" rx="48" fill="url(#avadmin)"/><path d="M32 52 Q48 40 64 52 L64 70 H32 Z" fill="#1D4ED8"/><rect x="30" y="34" width="36" height="10" rx="5" fill="#153AA8"/><circle cx="48" cy="26" r="14" fill="#F5D0B0"/></svg>
