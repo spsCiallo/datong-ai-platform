@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1280">
   <title>大同云 · PC 管理后台</title>
-  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon-datong.svg?v=2">
   <link rel="stylesheet" href="../vendors/element-ui.css">
   <link rel="stylesheet" href="../assets/css/app.css">
   <link rel="stylesheet" href="../assets/css/themes.css">
@@ -775,14 +775,12 @@
         <el-form-item label="地图位置">
           <div style="width:100%">
             <div class="flex items-center gap-8" style="flex-wrap:wrap">
-              <span class="tag brand">X {{ form.mapX === null || form.mapX === undefined ? '未标注' : form.mapX }}</span>
-              <span class="tag brand">Y {{ form.mapY === null || form.mapY === undefined ? '未标注' : form.mapY }}</span>
-              <el-button size="mini" @click="clearMapPos" :disabled="form.mapX === null || form.mapX === undefined">清除位置</el-button>
-              <span class="dim" style="font-size:12px">在地图上点一下即可标注该商品的位置（0-1000 / 0-700）</span>
+              <span class="tag" :class="hasMapPos ? 'brand' : ''">{{ hasMapPos ? '已标注位置' : '还没标注位置' }}</span>
+              <span class="dim" style="font-size:12px">在地图上点一下标注商品位置，再点同一个点可以取消</span>
             </div>
             <village-map :points="mapPoints" :value="form.id" pickable height="300px"
                          :pick-x="form.mapX" :pick-y="form.mapY"
-                         @pick="onPickPos" style="margin-top:10px"></village-map>
+                         @pick="onPickPos" @unpick="clearMapPos" style="margin-top:10px"></village-map>
           </div>
         </el-form-item>
       </el-form>
@@ -1163,14 +1161,12 @@
           <el-form-item label="地图位置">
             <div style="width:100%">
               <div class="flex items-center gap-8" style="flex-wrap:wrap">
-                <span class="tag brand">X {{ form.mapX === null || form.mapX === undefined ? '未标注' : form.mapX }}</span>
-                <span class="tag brand">Y {{ form.mapY === null || form.mapY === undefined ? '未标注' : form.mapY }}</span>
-                <el-button size="mini" @click="clearMapPos" :disabled="form.mapX === null || form.mapX === undefined">清除位置</el-button>
-                <span class="dim" style="font-size:12px">在地图上点一下即可标注点位位置</span>
+                <span class="tag" :class="hasMapPos ? 'brand' : ''">{{ hasMapPos ? '已标注位置' : '还没标注位置' }}</span>
+                <span class="dim" style="font-size:12px">在地图上点一下标注点位位置，再点同一个点可以取消</span>
               </div>
               <village-map :points="mapPoints" :value="form.id" pickable height="280px"
                            :pick-x="form.mapX" :pick-y="form.mapY"
-                           @pick="onPickPos" style="margin-top:10px"></village-map>
+                           @pick="onPickPos" @unpick="clearMapPos" style="margin-top:10px"></village-map>
             </div>
           </el-form-item>
           <el-form-item label="印章名称"><el-input v-model="form.stamp"></el-input></el-form-item>
@@ -1243,14 +1239,12 @@
           <el-form-item label="地图位置">
             <div style="width:100%">
               <div class="flex items-center gap-8" style="flex-wrap:wrap">
-                <span class="tag brand">X {{ form.mapX === null || form.mapX === undefined ? '未标注' : form.mapX }}</span>
-                <span class="tag brand">Y {{ form.mapY === null || form.mapY === undefined ? '未标注' : form.mapY }}</span>
-                <el-button size="mini" @click="clearMapPos" :disabled="form.mapX === null || form.mapX === undefined">清除位置</el-button>
-                <span class="dim" style="font-size:12px">在地图上点一下即可标注活动举办位置</span>
+                <span class="tag" :class="hasMapPos ? 'brand' : ''">{{ hasMapPos ? '已标注位置' : '还没标注位置' }}</span>
+                <span class="dim" style="font-size:12px">在地图上点一下标注活动举办位置，再点同一个点可以取消</span>
               </div>
               <village-map :points="mapPoints" :value="form.id" pickable height="280px"
                            :pick-x="form.mapX" :pick-y="form.mapY"
-                           @pick="onPickPos" style="margin-top:10px"></village-map>
+                           @pick="onPickPos" @unpick="clearMapPos" style="margin-top:10px"></village-map>
             </div>
           </el-form-item>
           <el-form-item label="活动说明"><el-input type="textarea" :rows="3" v-model="form.desc"></el-input></el-form-item>

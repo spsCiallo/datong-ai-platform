@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>大同云 · 商户工作台</title>
-  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="../assets/img/favicon-datong.svg?v=2">
   <link rel="stylesheet" href="../vendors/element-ui.css">
   <link rel="stylesheet" href="../assets/css/app.css">
   <link rel="stylesheet" href="../assets/css/themes.css">
@@ -381,17 +381,16 @@
             </div>
           </div>
         </el-form-item>
-        <el-form-item label="地图位置">
+        <!-- 农产文创是实物发货、没有「在哪儿」的问题，所以不显示地图；研学 / 民宿 / 农事体验才需要标位置 -->
+        <el-form-item label="地图位置" v-if="form.category !== 'goods'">
           <div style="width:100%">
             <div class="flex items-center gap-8" style="flex-wrap:wrap">
-              <span class="tag brand">X {{ form.mapX === null || form.mapX === undefined ? '未标注' : form.mapX }}</span>
-              <span class="tag brand">Y {{ form.mapY === null || form.mapY === undefined ? '未标注' : form.mapY }}</span>
-              <el-button size="mini" @click="clearMapPos" :disabled="form.mapX === null || form.mapX === undefined">清除位置</el-button>
-              <span class="dim" style="font-size:12px">在地图上点一下即可标注商品位置（研学 / 民宿 / 农事体验建议标注）</span>
+              <span class="tag" :class="hasMapPos ? 'brand' : ''">{{ hasMapPos ? '已标注位置' : '还没标注位置' }}</span>
+              <span class="dim" style="font-size:12px">在地图上点一下标注位置，再点同一个点可以取消</span>
             </div>
-            <village-map :points="mapPoints" :value="form.id" pickable height="280px"
+            <village-map :points="mapPoints" :value="form.id" pickable height="300px"
                          :pick-x="form.mapX" :pick-y="form.mapY"
-                         @pick="onPickPos" style="margin-top:10px"></village-map>
+                         @pick="onPickPos" @unpick="clearMapPos" style="margin-top:10px"></village-map>
           </div>
         </el-form-item>
         <el-form-item label="商品介绍">

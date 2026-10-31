@@ -371,6 +371,12 @@
       this.loadCoverOptions();
     },
     computed: {
+      /** 是否已标注位置（只提示「已标注/未标注」，不再显示裸 X/Y 坐标） */
+      hasMapPos: function () {
+        var f = this.form || {};
+        return f.mapX !== null && f.mapX !== undefined && f.mapX !== ''
+          && f.mapY !== null && f.mapY !== undefined && f.mapY !== '';
+      },
       /** 地图选点参照物：点位 + 活动 + 其它已标注商品，当前编辑的商品单独高亮 */
       mapPoints: function () {
         var out = (this.mapContext || []).slice();
@@ -456,13 +462,15 @@
         this.coverPick = '';
       },
       /* ---------- 地图选点 ---------- */
+      /* 用 $set：新增记录的 form 是字面量，本来没有 mapX/mapY 键，
+         Vue 2 侦测不到新加属性，直接赋值会让准星和「已标注」状态都不刷新 */
       onPickPos: function (pos) {
-        this.form.mapX = pos.x;
-        this.form.mapY = pos.y;
+        this.$set(this.form, 'mapX', pos.x);
+        this.$set(this.form, 'mapY', pos.y);
       },
       clearMapPos: function () {
-        this.form.mapX = null;
-        this.form.mapY = null;
+        this.$set(this.form, 'mapX', null);
+        this.$set(this.form, 'mapY', null);
       },
       openEdit: function (row) {
         var self = this;
@@ -607,6 +615,12 @@
     computed: {
       tableLabel: function () {
         return { spots: '点位', activities: '活动', knowledge: '知识条目' }[this.tab];
+      },
+      /** 是否已标注位置（只提示「已标注/未标注」，不再显示裸 X/Y 坐标） */
+      hasMapPos: function () {
+        var f = this.form || {};
+        return f.mapX !== null && f.mapX !== undefined && f.mapX !== ''
+          && f.mapY !== null && f.mapY !== undefined && f.mapY !== '';
       },
       /** 地图选点参照物：同表其它记录（点位/活动）的坐标，当前编辑的记录单独高亮 */
       mapPoints: function () {
@@ -763,6 +777,8 @@
           : (this.tab === 'activities'
             ? { tag: '节庆', cover: this.covers[0], date: new Date().toISOString().slice(0, 10) }
             : {});
+        this.$set(this.form, 'mapX', null);
+        this.$set(this.form, 'mapY', null);
         this.tagsText = '';
         this.formImages = this.form.cover ? [this.form.cover] : [''];
         this.formVisible = true;
@@ -794,14 +810,16 @@
         var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         this.formImages = arr;
       },
-      /* ---------- 地图选点 ---------- */
+      /* ---------- 地图选点 ----------
+         新增点位/活动时 form 是字面量对象，本来没有 mapX/mapY 键；
+         Vue 2 侦测不到「后来新加的属性」，所以用 $set 保证准星与「已标注」状态刷新 */
       onPickPos: function (pos) {
-        this.form.mapX = pos.x;
-        this.form.mapY = pos.y;
+        this.$set(this.form, 'mapX', pos.x);
+        this.$set(this.form, 'mapY', pos.y);
       },
       clearMapPos: function () {
-        this.form.mapX = null;
-        this.form.mapY = null;
+        this.$set(this.form, 'mapX', null);
+        this.$set(this.form, 'mapY', null);
       },
       /** 判断是不是 icons.svg 里的图标 key（历史数据存的是单个汉字，不能直接当 key 拼 URL） */
       isStampIcon: function (key) {

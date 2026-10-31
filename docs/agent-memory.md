@@ -54,6 +54,15 @@
   在**子组件模板**里用到时必须 `Vue.component` 全局注册，局部 `components` 解析不到。
   （2026-10-31，agri-tourism-revamp）
 
+- **Vue 2 给对象新增属性必须用 `this.$set(obj, key, val)`**，直接 `obj.key = val`
+  不会触发视图更新。新增商品时 `form` 是字面量、本来没有 `mapX/mapY` 键，踩过一次
+  导致「地图点了准星不出现」。（2026-10-31，map-picking-and-ui-fixes）
+- `village-map` 的点击热区绑在**根 `.vmap`** 上而不是 `.vmap-stage`：stage 按底图比例缩放后
+  会比容器窄，两侧留白点不到。选点/取消统一走 `@pick` / `@unpick`。
+  （2026-10-31，map-picking-and-ui-fixes）
+- 编辑类 `el-dialog` 内容可能超过视口（实测 1141px），必须给 `.el-dialog__body` 限高
+  `max-height:74vh; overflow-y:auto`，否则下半部分（如图集、地图）永远滚不到。
+  （2026-10-31，map-picking-and-ui-fixes）
 ## 视觉资源
 
 - `assets/img/art/` 下所有插画由 `tools/make-art.js` 生成，**不要手改生成的 SVG**
@@ -62,6 +71,9 @@
   `DTTheme.set('red')` 会把 `data-theme` 属性**移除**，这是正常行为不是 bug。
   （2026-10-31，agri-tourism-revamp）
 
+- favicon 文件名即缓存键：只改内容不换路径，浏览器（尤其 `127.0.0.1` 这类 origin）
+  可能几个月不刷新。换图标必须**同时换文件名**（现用 `favicon-datong.svg`）并同步
+  `tools/make-art.js` 的 `write(...)` 行。（2026-10-31，map-picking-and-ui-fixes）
 ## 自检
 
 - 顺序：`tools/build.ps1` → `smoke-test.js` → `browser-check.js` →
@@ -73,6 +85,11 @@
 - `browser-check.js` 会把截图写到 `docs/screenshots/`，改完 UI 可以直接看这些图复核。
   （2026-10-31，agri-tourism-revamp）
 
+- 用 headless Chrome + CDP `Input.dispatchMouseEvent` 做真实点击才能验证地图选点；
+  JS 合成 `MouseEvent` 能通不代表用户点得到（热区/遮挡/滚动位置都可能是真因）。
+  （2026-10-31，map-picking-and-ui-fixes）
+- 探测 admin `viewContent` 换 tab 必须调组件的 `switchTab()`，只改 `c.tab` 不会重新拉列表，
+  会误判成「弹窗里没渲染」。（2026-10-31，map-picking-and-ui-fixes）
 ## 踩坑
 
 - `job_kill` 杀掉挂着的中转 job 会连带杀掉它管理的 java 进程，杀完必须复查

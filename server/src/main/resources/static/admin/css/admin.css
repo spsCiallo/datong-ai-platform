@@ -522,3 +522,12 @@
 .img-set-row > img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex: none; }
 .img-set-tip { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; }
 .img-set-tip .tag { font-size: 11px; padding: 0 6px; }
+
+/* ---------------------------------------------------------------
+   编辑弹窗（商品 / 点位 / 活动）内容较高，里面有图集和地图选点。
+   Element UI 默认让弹窗随内容变高，在 900px 高的屏幕上会超出视口，
+   地图落在首屏之外、页面又滚不动 → 用户点不到地图，以为「选点没反应」。
+   这里给弹窗主体限高并允许内部滚动。
+   --------------------------------------------------------------- */
+.el-dialog { margin-top: 6vh !important; }
+.el-dialog__body { max-height: 74vh; overflow-y: auto; }

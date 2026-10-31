@@ -459,9 +459,19 @@ select.input { appearance: auto; }
   min-height: 420px;
   overflow: hidden;
 }
+.ai-back {
+  /* 返回按钮挪到卡片外面以后要自己占一行：左对齐、和标题卡留一点距离 */
+  align-self: flex-start;
+  margin: 0 0 10px;
+  flex: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 6px 10px 6px 4px;
+  font-size: 14px;
+  color: var(--brand);
+}
 .ai-head { margin-bottom: 12px; flex: none; display: flex; align-items: center; gap: 10px; }
 .ai-head h2 { margin: 0; font-size: 18px; }
-.ai-back { margin: 0; box-shadow: none; background: transparent; padding: 6px 8px; flex: none; }
 .ai-msgs { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 8px 2px 12px; }
 .ai-msg { display: flex; }
 .ai-msg.user { justify-content: flex-end; }
@@ -477,6 +487,10 @@ select.input { appearance: auto; }
 @keyframes blink { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
 .ai-suggest { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0; }
 .ai-input { display: flex; gap: 8px; flex: none; padding: 10px 0 4px; background: var(--bg); border-top: 1px solid var(--line); }
+
+/* 「我的」页最下方的改密 / 退出：两个通栏按钮原来上下贴在一起，加竖向间距 */
+.mine-actions { display: flex; flex-direction: column; gap: 12px; }
+.mine-actions .btn-block { width: 100%; }
 
 .plan-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .plan-items li { display: flex; gap: 12px; align-items: flex-start; }

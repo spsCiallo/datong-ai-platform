@@ -231,6 +231,12 @@
         var c = this.form && this.form.category;
         return c === 'study' || c === 'homestay' || c === 'experience';
       },
+      /** 当前商品是否已经在地图上标了位置（只用于提示文案，不显示裸坐标） */
+      hasMapPos: function () {
+        var f = this.form || {};
+        return f.mapX !== null && f.mapX !== undefined && f.mapX !== ''
+          && f.mapY !== null && f.mapY !== undefined && f.mapY !== '';
+      },
       /** 选点参照物：本店其它已标注的商品 + 全村点位，商家选点时能看到相对位置 */
       mapPoints: function () {
         var out = [];
@@ -289,14 +295,17 @@
         var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         this.formImages = arr;
       },
-      /* ---------- 地图选点 ---------- */
+      /* ---------- 地图选点 ----------
+         用 $set 而不是直接赋值：新增商品时 form 是字面量对象，本身没有 mapX/mapY 这两个键，
+         Vue 2 侦测不到「后来新加的属性」，直接赋值会导致准星不出现、hasMapPos 不刷新，
+         表现就是「点了地图没反应」。 */
       onPickPos: function (pos) {
-        this.form.mapX = pos.x;
-        this.form.mapY = pos.y;
+        this.$set(this.form, 'mapX', pos.x);
+        this.$set(this.form, 'mapY', pos.y);
       },
       clearMapPos: function () {
-        this.form.mapX = null;
-        this.form.mapY = null;
+        this.$set(this.form, 'mapX', null);
+        this.$set(this.form, 'mapY', null);
       },
       openForm: function (row) {
         if (row) {
@@ -308,7 +317,7 @@
           if (!imgs.length && row.cover) { imgs = [row.cover]; }
           this.formImages = imgs.length ? imgs : [this.covers[0]];
         } else {
-          this.form = { category: 'goods', unit: '份', stock: 10, price: 0, cover: this.covers[0] };
+          this.form = { category: 'goods', unit: '份', stock: 10, price: 0, cover: this.covers[0], mapX: null, mapY: null };
           this.tagsText = '';
           this.timeSlotsText = '';
           this.roomTypesText = '';
@@ -335,7 +344,9 @@
         if (!images.length) { this.$message.error('至少保留一张商品图'); return; }
         payload.images = images;
         payload.cover = images[0];
-        var hasPos = payload.mapX !== null && payload.mapX !== undefined && payload.mapX !== ''
+        // 农产文创是实物发货，不参与地图标注：切到 goods 分类时把坐标清掉
+        var hasPos = payload.category !== 'goods'
+          && payload.mapX !== null && payload.mapX !== undefined && payload.mapX !== ''
           && payload.mapY !== null && payload.mapY !== undefined && payload.mapY !== '';
         payload.mapX = hasPos ? Number(payload.mapX) : null;
         payload.mapY = hasPos ? Number(payload.mapY) : null;

@@ -94,6 +94,11 @@
           out.push({ type: t, color: TYPE_COLOR[t] || TYPE_COLOR.spot, name: self.typeName(t) });
         });
         return out;
+      },
+      /** 是否已经选过点（pickable 模式下用来切换「再点一次取消」的提示） */
+      hasPick: function () {
+        return this.pickX !== null && this.pickX !== undefined
+          && this.pickY !== null && this.pickY !== undefined;
       }
     },
     watch: {
@@ -221,15 +226,32 @@
         window.removeEventListener('mousemove', this.onMove);
         window.removeEventListener('mouseup', this.onUp);
       },
-      /** 点击底图：pickable 时回传逻辑坐标；否则只做「取消选中」 */
+      /** 点击底图：pickable 时回传逻辑坐标；再点已选中的那个点则取消 */
       onStageClick: function (e) {
         if (this.moved) { return; } // 拖拽结束的那一次 click 不算选点
+        if (!this.pickable) { return; } // 只读地图点一下不该乱改数据
         var rect = this.$el.getBoundingClientRect();
-        var x = (e.clientX - rect.left - this.tx) / this.scale;
-        var y = (e.clientY - rect.top - this.ty) / this.scale;
+        var px = e.clientX - rect.left;
+        var py = e.clientY - rect.top;
+        if (this.hasPick) {
+          // 屏幕距离 20px 内算「点的是同一个点」，再点一下就取消标注
+          var cx = this.pickX * this.scale + this.tx;
+          var cy = this.pickY * this.scale + this.ty;
+          if (Math.abs(px - cx) < 20 && Math.abs(py - cy) < 20) {
+            this.$emit('unpick');
+            return;
+          }
+        }
+        var x = (px - this.tx) / this.scale;
+        var y = (py - this.ty) / this.scale;
         x = Math.round(Math.min(W, Math.max(0, x)));
         y = Math.round(Math.min(H, Math.max(0, y)));
         this.$emit('pick', { x: x, y: y });
+      },
+      /** 直接点准星取消 */
+      cancelPick: function () {
+        if (this.moved) { return; }
+        this.$emit('unpick');
       },
       onMarkerClick: function (p) {
         if (this.moved) { return; }
@@ -287,8 +309,9 @@
       }
     },
     template: [
-      '<div class="vmap" :style="{ height: height }" :class="{ \'is-pickable\': pickable }">',
-      '  <div class="vmap-stage" :style="stageStyle" @mousedown="onDown" @click="onStageClick">',
+      '<div class="vmap" :style="{ height: height }" :class="{ \'is-pickable\': pickable }"',
+      '     @mousedown="onDown" @click="onStageClick">',
+      '  <div class="vmap-stage" :style="stageStyle">',
       '    <img class="vmap-bg" :src="src" alt="大同村虚拟地图" draggable="false">',
       '    <div class="vmap-grid"></div>',
       '    <div v-for="p in points" :key="p.id" class="vmap-marker"',
@@ -301,17 +324,18 @@
       '      </span>',
       '      <span class="vmap-label">{{ p.name }}</span>',
       '    </div>',
-      '    <div v-if="pickStyle" class="vmap-pick" :style="pickStyle"><i></i></div>',
+      '    <div v-if="pickStyle" class="vmap-pick" :style="pickStyle" title="再点一次取消标注"',
+      '         @click.stop="cancelPick"><i class="pick-hit"></i><i class="pick-dot"></i></div>',
       '  </div>',
-      '  <div class="vmap-tools">',
-      '    <button type="button" class="vmap-btn" title="放大" @click="zoomIn">+</button>',
-      '    <button type="button" class="vmap-btn" title="缩小" @click="zoomOut">−</button>',
-      '    <button type="button" class="vmap-btn reset" title="复位" @click="reset">复位</button>',
+      '  <div class="vmap-tools" @mousedown.stop>',
+      '    <button type="button" class="vmap-btn" title="放大" @click.stop="zoomIn">+</button>',
+      '    <button type="button" class="vmap-btn" title="缩小" @click.stop="zoomOut">−</button>',
+      '    <button type="button" class="vmap-btn reset" title="复位" @click.stop="reset">复位</button>',
       '  </div>',
-      '  <div v-if="showLegend" class="vmap-legend">',
+      '  <div v-if="showLegend" class="vmap-legend" @click.stop @mousedown.stop>',
       '    <span v-for="l in legendItems" :key="l.type"><i :style="{ background: l.color }"></i>{{ l.name }}</span>',
       '  </div>',
-      '  <div v-if="pickable" class="vmap-tip">点击地图任意位置选点，可拖动与缩放</div>',
+      '  <div v-if="pickable" class="vmap-tip">{{ hasPick ? \'已标注，再点同一个点可取消\' : \'点击地图任意位置标注位置\' }}</div>',
       '</div>'
     ].join('\n')
   };

@@ -127,18 +127,30 @@
   position: absolute;
   width: 0;
   height: 0;
-  z-index: 4;
-  pointer-events: none;
+  z-index: 6;
+  /* 准星自己可点：再点一次取消标注（父级 .vmap 已是整个热区） */
+  cursor: pointer;
 }
 .vmap-pick::before,
 .vmap-pick::after {
   content: '';
   position: absolute;
   background: var(--brand);
+  pointer-events: none;
 }
 .vmap-pick::before { left: -14px; top: -1px; width: 28px; height: 2px; }
 .vmap-pick::after  { left: -1px; top: -14px; width: 2px; height: 28px; }
-.vmap-pick i {
+/* 准星外扩一圈透明热区：手指/鼠标都点得到，点了就取消标注 */
+.vmap-pick .pick-hit {
+  position: absolute;
+  left: -18px;
+  top: -18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.vmap-pick .pick-dot {
   position: absolute;
   left: -6px;
   top: -6px;
@@ -148,6 +160,7 @@
   border: 2px solid var(--brand);
   background: rgba(255, 255, 255, .7);
   animation: vmap-pulse 1.6s ease-out infinite;
+  pointer-events: none;
 }
 
 /* ---------- 控件 ---------- */

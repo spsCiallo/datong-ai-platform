@@ -7,7 +7,7 @@
  *    assets/img/art/goods-*.svg       24 个商品 × 3 张图集
  *    assets/img/art/map-village.svg   虚拟地图底图（俯视手绘，1000×700，无文字）
  *    assets/img/logo.svg              平台标
- *    assets/img/favicon.svg           站点图标
+ *    assets/img/favicon-datong.svg    站点图标（文件名带版本，绕开浏览器强缓存）
  *    assets/img/hero.svg              登录页主视觉
  *    assets/img/pattern.svg           纹样
  *    assets/img/seal.svg              印章
@@ -1083,6 +1083,9 @@ function logoSvg() {
     + '<path d="M22 78 Q48 70 74 78" stroke="#F5C518" stroke-width="4" fill="none" stroke-linecap="round"/>');
 }
 
+/* 站点图标：红底 + 白色「大」字 + 金色黄花点。
+   文件名带 datong，是为了避开浏览器对旧站 favicon.svg 的强缓存——
+   同名文件即使内容换了，Chrome 也可能几个月不重新请求。 */
 function faviconSvg() {
   return svg(64, 64,
     '<rect width="64" height="64" rx="14" fill="#C0392B"/>'
@@ -1295,7 +1298,7 @@ write('art/map-village.svg', mapVillageSvg());
 
 console.log('[make-art] 生成品牌件…');
 write('logo.svg', logoSvg());
-write('favicon.svg', faviconSvg());
+write('favicon-datong.svg', faviconSvg());
 write('hero.svg', heroSvg());
 write('pattern.svg', patternSvg());
 write('seal.svg', sealSvg());
