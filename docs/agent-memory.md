@@ -90,6 +90,19 @@
   （2026-10-31，map-picking-and-ui-fixes）
 - 探测 admin `viewContent` 换 tab 必须调组件的 `switchTab()`，只改 `c.tab` 不会重新拉列表，
   会误判成「弹窗里没渲染」。（2026-10-31，map-picking-and-ui-fixes）
+- 游客端「分类」字段有两种形态：列表接口给字符串（`category: 'goods'`），
+  字典对象走 `normalizeCategory()`（返回 `{key,name,reasons}`）。**不要用
+  `normalizeCategory(str) === 'goods'` 判断**，恒为 false；用 `catKey()`（2026-11-02，
+  orders-and-navigation）。
+- `/api/shop/orders` 列表项**没有** `productCategory`，只有 `category`；
+  `productCategory` / `productMapX` / `productMapY` / `productImages` / `productDesc`
+  只在订单详情 `/api/shop/orders/{id}` 里返回。（2026-11-02，orders-and-navigation）
+- 活动预约写 `activityBookings` 表、不写 `orders` 表，列表走 `/api/tour/bookings`。
+  「预约后看不到」优先怀疑列表入口缺失，而不是下单失败。（2026-11-02，orders-and-navigation）
+- 订单列表排序键不能直接 `String.valueOf(createdAt)`：NULL 会变成 `"null"`，
+  字典序比数字大，老订单永远置顶。先 `trim()` 再兜底。（2026-11-02，orders-and-navigation）
+- 探针里调 `vm.buyNow()` 前必须设 `vm.address`，否则被 `toast('请填写收货地址')`
+  静默拦下，后续断言会全落在旧数据上。（2026-11-02，orders-and-navigation）
 ## 踩坑
 
 - `job_kill` 杀掉挂着的中转 job 会连带杀掉它管理的 java 进程，杀完必须复查

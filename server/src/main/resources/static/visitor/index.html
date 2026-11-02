@@ -467,6 +467,8 @@
                   <span class="tag brand" v-for="t in (product.tags || [])" :key="t">{{ t }}</span>
                 </div>
                 <p class="mt-12">{{ product.desc }}</p>
+                <!-- 商品介绍：后端 products.intro 是有内容的，之前只渲染 desc 白丢了这段 -->
+                <p class="mt-8 muted" v-if="product.intro">{{ product.intro }}</p>
 
                 <div class="pd-form mt-16" v-if="isBooking">
                   <label class="field">
@@ -514,6 +516,15 @@
                     {{ isBooking ? '立即预约' : '立即购买' }}
                   </button>
                 </div>
+              </div>
+              <!-- 商品位置：有坐标才画（纯快递的农产文创不标位置就不显示这张图） -->
+              <div class="card pad mt-12 spot-map" v-if="productMapPoints.length">
+                <div class="spot-map-head">
+                  <h3>{{ isBooking ? '体验地点' : '在村里的位置' }}</h3>
+                  <button class="link-btn" @click="openVillageMap(product.id)">看全图 ›</button>
+                </div>
+                <village-map :points="productMapPoints" :value="product.id"
+                             height="240px" :show-legend="false"></village-map>
               </div>
               <div class="card pad mt-12" v-if="productMerchant.id">
                 <div class="flex items-center gap-12">
@@ -614,38 +625,82 @@
             </div>
           </template>
 
-          <!-- 列表态 -->
+          <!-- 列表态：商品订单 / 活动预约两个分栏 -->
           <template v-else>
-            <div class="page-head"><h2>我的订单</h2></div>
-            <div class="chips">
-              <button v-for="s in statuses" :key="s.key" class="chip"
-                      :class="{ on: orderStatusFilter === s.key }"
-                      @click="orderStatusFilter = s.key; loadOrders()">{{ s.text }}</button>
+            <div class="page-head">
+              <h2>我的订单</h2>
+              <button class="btn btn-sm btn-ghost" @click="exitTo('mine')">‹ 退出</button>
             </div>
-            <div v-if="orders.length" class="order-list">
-              <article v-for="o in orders" :key="o.id" class="card pad order-item"
-                       @click="openOrder(o.id)">
-                <div class="flex items-center gap-12">
-                  <img class="thumb" :src="asset(o.cover)" alt="">
-                  <div class="flex-1">
-                    <b>{{ o.productName }}</b>
-                    <p class="muted small">{{ orderMerchantName(o) }} · {{ time(o.createdAt) }}</p>
+            <!-- 分栏：商城下单进 orders 表，活动预约进 activityBookings 表，
+                 两者是两套数据，用分栏各自列出才不会「预约完在订单里找不到」。 -->
+            <div class="seg mb-16">
+              <button :class="{ on: ordersTab === 'orders' }" @click="switchOrdersTab('orders')">商品订单</button>
+              <button :class="{ on: ordersTab === 'bookings' }" @click="switchOrdersTab('bookings')">活动预约</button>
+            </div>
+
+            <template v-if="ordersTab === 'orders'">
+              <div class="chips">
+                <button v-for="s in statuses" :key="s.key" class="chip"
+                        :class="{ on: orderStatusFilter === s.key }"
+                        @click="orderStatusFilter = s.key; loadOrders()">{{ s.text }}</button>
+              </div>
+              <div v-if="orders.length" class="order-list">
+                <article v-for="o in orders" :key="o.id" class="card pad order-item"
+                         @click="openOrder(o.id)">
+                  <div class="flex items-center gap-12">
+                    <img class="thumb" :src="asset(o.cover)" alt="">
+                    <div class="flex-1">
+                      <b>{{ o.productName }}</b>
+                      <p class="muted small">{{ orderMerchantName(o) }} · {{ time(o.createdAt) }}</p>
+                    </div>
+                    <span class="tag" :class="statusClass(o.status)">{{ statusText(o.status) }}</span>
                   </div>
-                  <span class="tag" :class="statusClass(o.status)">{{ statusText(o.status) }}</span>
-                </div>
-                <div class="flex items-center justify-between mt-12">
-                  <span class="muted small" v-if="o.rejectStatus === 'waiting_buyer'">商家申请关闭，等你确认</span>
-                  <span class="muted small" v-else-if="o.rejectStatus === 'buyer_disagreed'">已提交协商</span>
-                  <span v-else></span>
-                  <b>{{ money(o.amount) }}</b>
-                </div>
-              </article>
-            </div>
-            <div v-else class="empty">
-              <img src="../assets/img/empty.svg" alt="">
-              <p class="title">还没有订单</p>
-              <p class="desc">去商城逛逛，或预约研学民宿</p>
-            </div>
+                  <div class="flex items-center justify-between mt-12">
+                    <span class="muted small" v-if="o.rejectStatus === 'waiting_buyer'">商家申请关闭，等你确认</span>
+                    <span class="muted small" v-else-if="o.rejectStatus === 'buyer_disagreed'">已提交协商</span>
+                    <span v-else></span>
+                    <b>{{ money(o.amount) }}</b>
+                  </div>
+                </article>
+              </div>
+              <div v-else class="empty">
+                <img src="../assets/img/empty.svg" alt="">
+                <p class="title">还没有订单</p>
+                <p class="desc">去商城逛逛，或预约研学民宿</p>
+              </div>
+            </template>
+
+            <template v-else>
+              <div v-if="myBookings.length" class="order-list">
+                <article v-for="b in myBookings" :key="b.id" class="card pad order-item"
+                         @click="openBooking(b)">
+                  <div class="flex items-center gap-12">
+                    <img class="thumb" :src="asset(b.cover)" alt="" @error="imgFail">
+                    <div class="flex-1">
+                      <b>{{ b.activityTitle || '活动' }}</b>
+                      <p class="muted small">{{ b.date }} · {{ b.people }} 人 · {{ b.place || '大同村' }}</p>
+                    </div>
+                    <span class="tag" :class="bookingTagClass(b.status)">{{ bookingStatusText(b.status) }}</span>
+                  </div>
+                  <div class="flex items-center justify-between mt-12">
+                    <span class="muted small">预约编号 <span class="mono">{{ b.id }}</span></span>
+                    <button class="btn btn-sm btn-ghost" v-if="b.status !== 'cancelled'"
+                            @click.stop="cancelBooking(b)">取消预约</button>
+                  </div>
+                  <!-- 活动预约没有独立详情页，位置直接画在卡片里 -->
+                  <div class="spot-map mt-12" v-if="bookingPoints(b).length">
+                    <div class="spot-map-head"><h3>活动位置</h3></div>
+                    <village-map :points="bookingPoints(b)" :value="b.activityId"
+                                 height="220px" :show-legend="false"></village-map>
+                  </div>
+                </article>
+              </div>
+              <div v-else class="empty">
+                <img src="../assets/img/empty.svg" alt="">
+                <p class="title">还没有活动预约</p>
+                <p class="desc">去活动日历挑一场，预约后会出现在这里</p>
+              </div>
+            </template>
           </template>
         </section>
 
@@ -690,6 +745,17 @@
                     @click="openChat(orderDetail.merchantId, orderMerchantName(orderDetail))">联系商家</button>
           </div>
 
+          <!-- 订单位置：这件商品 / 这次活动在哪（后端 orderDetail 带 productMapX/productMapY） -->
+          <div class="card pad mt-12 spot-map" v-if="orderMapPoints.length">
+            <div class="spot-map-head">
+              <h3>{{ orderDetail.category === 'goods' ? '取货 / 发货地' : '体验地点' }}</h3>
+              <button class="link-btn" @click="openVillageMap(orderDetail.productId)">看全图 ›</button>
+            </div>
+            <village-map :points="orderMapPoints" :value="orderDetail.productId"
+                         height="240px" :show-legend="false"></village-map>
+            <p class="muted small mt-8" v-if="orderDetail.productDesc">{{ orderDetail.productDesc }}</p>
+          </div>
+
           <div class="card pad mt-12" v-if="logistics">
             <h3>物流信息</h3>
             <p class="muted mt-8">{{ logistics.company }} · {{ logistics.trackingNo }}</p>
@@ -720,7 +786,10 @@
 
         <!-- ========== 活动日历 ========== -->
         <section v-else-if="view === 'activities'" :key="view" class="view-enter">
-          <div class="page-head"><h2>活动日历</h2></div>
+          <div class="page-head">
+            <h2>活动日历</h2>
+            <button class="btn btn-sm btn-ghost" @click="exitTo('home')">‹ 退出</button>
+          </div>
           <div class="act-list">
             <article v-for="a in activities" :key="a.id" class="act-item card hoverable"
                      :class="{ past: isPast(a) }" @click="openActivity(a.id)">

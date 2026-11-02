@@ -18,6 +18,32 @@
   var fmt = DT.fmt;
 
   var TOP_VIEWS = ['home', 'spots', 'shop', 'mine'];
+
+  /**
+   * 子页面的「上级页面」。
+   *
+   * 为什么需要它：go() 的 viewStack 记的是「一路点进来的视图链」，但顶层 Tab
+   * （首页 / 打卡 / 商城 / 我的）会清空栈。于是「商城 → 商品详情」的栈里只剩
+   * productDetail 一层，返回时 pop 成空栈，旧代码兜底回 home —— 从商城点进商品，
+   * 退出却跳回首页，用户会觉得"页面乱跳"。
+   * 这里给每个子页面登记它该回到哪，栈空时用它兜底，返回目标就稳定了。
+   */
+  var PARENT_VIEW = {
+    spotDetail: 'spots',
+    villageMap: 'spots',
+    productDetail: 'shop',
+    booking: 'shop',
+    activityDetail: 'activities',
+    activities: 'home',
+    orderDetail: 'orders',
+    orders: 'mine',
+    merchantHome: 'home',
+    chat: 'home',
+    ai: 'home',
+    plan: 'home',
+    reports: 'mine',
+  };
+
   var CART_KEY = 'datong.' + DT.store.ns + '.cart';
 
   /* ============================ 本地小工具 ============================ */
@@ -111,6 +137,31 @@
       return v.split(/[,，|]/).map(function (s) { return s.trim(); }).filter(Boolean);
     }
     return [];
+  }
+
+  /**
+   * 坐标是不是真的存在。
+   *
+   * 为什么不能直接 Number(v)：Number(null) === 0、Number('') === 0、Number(false) === 0，
+   * 都是有限数。商品的 mapX/mapY 没标注时后端给 null，用 Number 判断会把「没位置」
+   * 误判成坐标 0,0，地图左上角就多出一个点。这里先挡空值再看是否有限数。
+   */
+  function isRealNum(v) {
+    if (v === null || v === undefined || v === '') { return false; }
+    return isFinite(Number(v));
+  }
+
+  /**
+   * 取「分类」的键名。
+   *
+   * 商品、订单、活动上的 category 是纯字符串（goods / study / homestay / experience），
+   * 而后台字典接口返回的是 { key, name } 对象。下面这些判断以前直接拿 category
+   * 当字符串比，遇到对象就恒不相等，所以统一走这个函数取键。
+   */
+  function catKey(c) {
+    if (!c) { return ''; }
+    if (typeof c === 'string') { return c; }
+    return c.key || c.code || c.value || c.id || '';
   }
 
   function normalizeCategory(c) {
@@ -329,6 +380,10 @@
         ],
         checkoutMode: false,
         submitting: false,
+        /* 我的订单分栏：'orders' 商品订单 / 'bookings' 活动预约。
+           活动预约写的是 activityBookings 表，跟 orders 是两套数据，
+           合在一个列表里会互相挤，分开看更清楚也不会「预约完找不到」。 */
+        ordersTab: 'orders',
 
         /* 订单详情 / 物流 / 拒绝协商 */
         orderDetail: {},
@@ -727,6 +782,40 @@
       },
 
       /* -------------------- 虚拟地图：坐标点集合（computed） -------------------- */
+      /**
+       * 商品在村里的位置（商品详情页用）。
+       *
+       * 后端 products 已带 mapX/mapY（纯快递农产没有标位置就是 null）。
+       * 注意 Number(null) 是 0、Number('') 也是 0，所以必须先用 isRealNum 挡掉
+       * 空值，否则「没标位置」会被画成地图左上角的一个点。
+       */
+      productMapPoints: function () {
+        var p = this.product || {};
+        // 农产文创是实物发货，没有「到店位置」这回事；展示地图反而让人以为要自提。
+        // 商户端新建农产文创时也同样不给选点（merchant/index.html 的地图项按分类隐藏）。
+        if (catKey(p.category) === 'goods') { return []; }
+        if (!isRealNum(p.mapX) || !isRealNum(p.mapY)) { return []; }
+        return [{
+          id: String(p.id), name: p.name, type: p.category || 'goods',
+          icon: 'i-shop', x: Number(p.mapX), y: Number(p.mapY),
+          sub: CATEGORY_TEXT[p.category] || '商品',
+        }];
+      },
+
+      /** 订单详情的位置点：改造后 orderDetail 带 productMapX/productMapY */
+      orderMapPoints: function () {
+        var o = this.orderDetail || {};
+        // 同上：快递发货的农产文创不画位置图，只有要「到哪儿去」的体验类才有意义
+        if (catKey(o.productCategory || o.category) === 'goods') { return []; }
+        if (!isRealNum(o.productMapX) || !isRealNum(o.productMapY)) { return []; }
+        return [{
+          id: String(o.productId || o.id), name: o.productName || '订单商品',
+          type: o.productCategory || o.category || 'goods', icon: 'i-shop',
+          x: Number(o.productMapX), y: Number(o.productMapY),
+          sub: CATEGORY_TEXT[o.productCategory || o.category] || '商品',
+        }];
+      },
+
       /** 单个点位的坐标；后端没填 mapX/mapY 时返回 null，不硬编坐标 */
       spotMapPoints: function () {
         var out = [];
@@ -970,6 +1059,51 @@
         window.scrollTo({ top: 0 });
         this.loadOrders();
       },
+
+      /**
+       * 打开「我的订单」并切到指定分栏。
+       *
+       * 活动预约和商城订单是两套表，下单/预约成功后要把用户带到对应分栏，
+       * 否则用户点进来看到的是另一套列表，会以为「刚才那笔没了」。
+       */
+      openOrdersTab: function (tab) {
+        this.ordersTab = (tab === 'bookings') ? 'bookings' : 'orders';
+        this.orderStatusFilter = '';
+        this.openOrders();
+        if (this.ordersTab === 'bookings') { this.loadMyBookings(); }
+      },
+
+      switchOrdersTab: function (tab) {
+        this.ordersTab = (tab === 'bookings') ? 'bookings' : 'orders';
+        if (this.ordersTab === 'bookings') {
+          this.loadMyBookings();
+        } else {
+          this.loadOrders();
+        }
+      },
+
+      /** 活动预约卡片点击：回到那场活动的详情（活动已删除就只提示，不跳空页） */
+      openBooking: function (b) {
+        if (!b || !b.activityId) { return; }
+        if (b.alive === false) { return this.toast('这场活动已下线，预约记录仍保留在列表里', 'warn'); }
+        this.openActivity(b.activityId);
+      },
+
+      /** 单条活动预约的位置点（「我的订单 · 活动预约」卡片内嵌地图用） */
+      bookingPoints: function (b) {
+        if (!b || !isRealNum(b.mapX) || !isRealNum(b.mapY)) { return []; }
+        return [{
+          id: String(b.activityId || b.id), name: b.activityTitle || '活动',
+          type: 'activity', icon: 'i-calendar',
+          x: Number(b.mapX), y: Number(b.mapY),
+          sub: '活动 · ' + (b.place || '村内'),
+        }];
+      },
+
+      /** 预约状态标签色：待确认品牌色、已确认成功色、已取消灰色 */
+      bookingTagClass: function (s) {
+        return { pending: 'brand', confirmed: 'ok', cancelled: 'muted' }[s] || 'brand';
+      },
       /* ---------------------------- 基础工具 ---------------------------- */
 
       /* 统一图标：三端共用 assets/img/icons.svg，用 <use> 引用 symbol。
@@ -1207,8 +1341,24 @@
         }
         this.viewStack.pop();
         var prev = this.viewStack[this.viewStack.length - 1];
-        // 返回栈空了就回到对应顶层页
-        this.view = prev || (this.user ? 'home' : 'home');
+        // 返回栈空了不能一律回首页（旧行为导致"商城进商品、退出回首页"），
+        // 按 PARENT_VIEW 登记的上层页面兜底；真没登记的才回首页。
+        this.view = prev || PARENT_VIEW[this.view] || 'home';
+        window.scrollTo({ top: 0 });
+        this.onEnter(this.view);
+      },
+
+      /**
+       * 显式退出到某个页面（「退出」按钮专用）。
+       *
+       * 与 go() 的区别：go() 会往 viewStack 里压一层，exitTo 不压栈 —— 退出是
+       * 「离开这一屏」而不是「再进去一层」，栈要清空，否则下次返回会退回到刚退出的页。
+       */
+      exitTo: function (view) {
+        this.stopSpotGallery();
+        if (this.checkoutMode) { this.leaveCheckout(false); }
+        this.viewStack = [];
+        this.view = view || 'home';
         window.scrollTo({ top: 0 });
         this.onEnter(this.view);
       },
@@ -1463,9 +1613,10 @@
           self.actLoading = false;
           if (!res || !res.ok) { return; }
           self.toast(res.message || '预约成功');
-          self.loadMyBookings();
           self.loadActivities();
-          self.openActivity(a.id);
+          // 预约写的是 activityBookings 表，不在商城订单里。留在活动详情页
+          // 用户会去「我的订单」找，找不到就以为没成功；这里直接带他去看预约记录。
+          self.openOrdersTab('bookings');
         });
       },
 
@@ -1816,10 +1967,12 @@
           self.submitting = false;
           if (!res || !res.ok) { return; }
           self.toast(res.message || '下单成功');
-          self.go('orders');
-          self.checkoutMode = false;
-          self.loadOrders();
           self.loadProducts();
+          // 走 openOrdersTab 而不是 go('orders')：openOrdersTab 会退出结算态、
+          // 清掉状态筛选并直接拉一次订单列表，新下的单一定在「全部」第一屏。
+          // 旧写法先 go('orders') 再改 checkoutMode，会在返回栈里多压一层，
+          // 从订单页按返回会退回到刚买完的商品详情。
+          self.openOrdersTab('orders');
         });
       },
 

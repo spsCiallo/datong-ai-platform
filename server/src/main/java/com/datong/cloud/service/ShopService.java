@@ -442,7 +442,10 @@ public class ShopService {
             }
             list.add(decorateOrder(o));
         }
-        list.sort(Comparator.comparing((Map<String, Object> o) -> String.valueOf(o.get("createdAt"))).reversed());
+        // 排序键：createdAt 可能为 NULL（历史种子数据），String.valueOf(null) 会得到 "null"
+        // 这个字符串在字典序里比任何日期都大，会把老订单顶到最前面，让刚下的单排到第三四位。
+        // 这里统一取空串兜底，空串倒序时排在最后，新订单才稳定出现在列表第一位。
+        list.sort(Comparator.comparing((Map<String, Object> o) -> trim(o.get("createdAt"))).reversed());
 
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("orders", list);
@@ -474,6 +477,15 @@ public class ShopService {
             item.put("productUnit", p.get("unit"));
             item.put("timeSlots", timeSlotsOf(p));
             item.put("roomTypes", roomTypesOf(p));
+            // 订单详情要能说明「这件商品 / 这次活动在哪」：把商品的位置坐标与图集一并带出，
+            // 前端才能画虚拟地图。位置为空的商品（纯快递发货的农产文创）mapX/mapY 是 null，
+            // 前端据此不渲染地图，而不是画一张空图。
+            item.put("productMapX", p.get("mapX"));
+            item.put("productMapY", p.get("mapY"));
+            item.put("productImages", imagesOf(p));
+            item.put("productIntro", p.get("intro"));
+            item.put("productDesc", p.get("desc"));
+            item.put("productCategory", p.get("category"));
         }
         item.put("logs", logsOf(id));
         item.put("logistics", logisticsOf(o));

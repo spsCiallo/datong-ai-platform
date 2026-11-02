@@ -286,7 +286,9 @@ public class TourService {
     /** 我的预约：活动已删除的也照样列出，title 用提交时的快照兜底 */
     public List<Map<String, Object>> myBookings(SessionUser me) {
         List<Map<String, Object>> list = new ArrayList<>(db.eq("activityBookings", "userId", me.userId()));
-        list.sort(Comparator.comparing((Map<String, Object> m) -> String.valueOf(m.get("createdAt"))).reversed());
+        // createdAt 为 NULL 的老记录在 String.valueOf 下会变成 "null"，字典序大于任何日期，
+        // 倒序时会顶到最前面，把刚预约成功的活动挤出首屏。空串兜底后它们稳定排在最后。
+        list.sort(Comparator.comparing((Map<String, Object> m) -> text(m.get("createdAt"))).reversed());
         List<Map<String, Object>> out = new ArrayList<>();
         for (Map<String, Object> b : list) {
             Map<String, Object> item = new LinkedHashMap<>(b);
@@ -296,6 +298,12 @@ public class TourService {
             item.put("place", act == null ? null : act.get("place"));
             item.put("tag", act == null ? null : act.get("tag"));
             item.put("activityDate", act == null ? null : act.get("date"));
+            // 「我的订单 · 活动预约」也要能说明活动在哪：带上位置坐标、图集与介绍。
+            // 活动没标位置时 mapX/mapY 为 null，前端据此不画地图。
+            item.put("mapX", act == null ? null : act.get("mapX"));
+            item.put("mapY", act == null ? null : act.get("mapY"));
+            item.put("images", act == null ? List.of() : imagesOf(act));
+            item.put("desc", act == null ? null : act.get("desc"));
             if (item.get("activityTitle") == null && act != null) {
                 item.put("activityTitle", act.get("title"));
             }
