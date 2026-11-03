@@ -158,6 +158,7 @@ select.input { appearance: auto; }
 .view-enter > .card,
 .view-enter > .kpi,
 .view-enter > .menus,
+.view-enter > .mine-actions,
 .view-enter > .goods-grid,
 .view-enter > .spot-grid,
 .view-enter > .grid-entries {
@@ -173,7 +174,7 @@ select.input { appearance: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   .view-enter, .view-enter > .card, .view-enter > .kpi,
-  .view-enter > .menus, .view-enter > .goods-grid,
+  .view-enter > .menus, .view-enter > .mine-actions, .view-enter > .goods-grid,
   .view-enter > .spot-grid, .view-enter > .grid-entries { animation: none; }
 }
 
@@ -192,9 +193,25 @@ select.input { appearance: auto; }
 .nav-brand b { font-size: 16px; }
 .nav-brand i { font-style: normal; font-size: 11px; color: var(--brand); background: var(--brand-soft); padding: 2px 8px; border-radius: 999px; }
 .nav-links { display: flex; gap: 4px; margin-left: 8px; }
-.nav-links a { padding: 8px 14px; border-radius: 999px; color: var(--text-2); font-size: 14.5px; font-weight: 500; }
+/* 导航项 = 图标 + 文字。图标来自 icons.svg 的线条 symbol（stroke: currentColor），
+   所以选中/悬停时文字变色，图标跟着一起变色，不用再单独上色。 */
+.nav-links a {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 13px; border-radius: 999px;
+  color: var(--text-2); font-size: 14.5px; font-weight: 500;
+  transition: color .18s ease, background-color .18s ease;
+}
+.nav-links a svg { width: 17px; height: 17px; flex: none; opacity: .82; transition: opacity .18s ease, transform .18s ease; }
 .nav-links a:hover { color: var(--brand); background: var(--brand-soft); }
+.nav-links a:hover svg { opacity: 1; transform: translateY(-1px); }
 .nav-links a.on { color: var(--brand); background: var(--brand-soft); font-weight: 600; }
+.nav-links a.on svg { opacity: 1; }
+/* 1024~900 之间的窄桌面：5 项 + 图标会把导航挤满，收紧内边距和字距 */
+@media (max-width: 1080px) and (min-width: 901px) {
+  .nav-links { gap: 2px; margin-left: 4px; }
+  .nav-links a { padding: 8px 9px; gap: 5px; font-size: 13.5px; }
+  .nav-links a svg { width: 16px; height: 16px; }
+}
 .nav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .nav-avatar { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--brand-line); }
 .theme-dots { display: flex; gap: 6px; }
@@ -380,6 +397,14 @@ select.input { appearance: auto; }
 .map-tip h3 { font-size: 14px; margin-bottom: 8px; }
 .map-tip-list { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
 .map-tip-list li { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+
+/* 我的集章墙：替掉原来的「集章/订单/消费」三格数字。
+   印章墙是这一屏的主角，所以给它一张独立卡片 + 标题行 + 进度小字。 */
+.mine-wall-card { display: block; }
+.mine-wall-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mine-wall-title { font-size: 15px; }
+.mine-wall-empty { padding: 10px 2px 4px; line-height: 1.8; }
+.mine-wall { margin-top: 2px; }
 
 .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
 .stamp { display: grid; justify-items: center; gap: 6px; padding: 18px 10px; border: 2px dashed var(--line-strong); border-radius: var(--radius); background: var(--surface); color: var(--text-3); text-align: center; }

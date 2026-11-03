@@ -57,6 +57,12 @@
 - **Vue 2 给对象新增属性必须用 `this.$set(obj, key, val)`**，直接 `obj.key = val`
   不会触发视图更新。新增商品时 `form` 是字面量、本来没有 `mapX/mapY` 键，踩过一次
   导致「地图点了准星不出现」。（2026-10-31，map-picking-and-ui-fixes）
+- 游客端 `TOP_VIEWS`（visitor.js:20）决定哪些视图算顶层 Tab：进这些视图会**清空返回栈**。
+  新增导航入口要同步登记，否则从该页进详情再返回会多退一层（2026-11-03，mine-wall-and-nav-icons）。
+- 详情页里的「看全图」这类"再进一层"的跳转不能走 `go()`（顶层会清栈），
+  要手工 `viewStack.push(view)` + 赋值 + `onEnter`（见 `openVillageMap`）。（2026-11-03，mine-wall-and-nav-icons）
+- 「我的」页 `menus` 与顶部导航/首页宫格内容重复会显得冗长；删入口前先确认功能在别处可达。
+  改 `menus` 时要顺带改掉与之重名的标题（如「我的印章墙」→「打卡集章」）。（2026-11-03，mine-wall-and-nav-icons）
 - `village-map` 的点击热区绑在**根 `.vmap`** 上而不是 `.vmap-stage`：stage 按底图比例缩放后
   会比容器窄，两侧留白点不到。选点/取消统一走 `@pick` / `@unpick`。
   （2026-10-31，map-picking-and-ui-fixes）
@@ -84,6 +90,10 @@
   （2026-10-31，agri-tourism-revamp）
 - `browser-check.js` 会把截图写到 `docs/screenshots/`，改完 UI 可以直接看这些图复核。
   （2026-10-31，agri-tourism-revamp）
+- 量顶部导航（`.nav-links`）的尺寸必须放在 **1440×900 桌面区块**：≤900px 时它 `display:none`，
+  `getBoundingClientRect().width` 恒为 0，断言必假失败。（2026-11-03，mine-wall-and-nav-icons）
+- 改 UI 结构时 `browser-check` 的断言要**换契约不降强度**：删旧元素就把断言改成
+  「新元素在 + 旧元素不在」（如 `.kpi` 不存在、被删入口文案不出现）。（2026-11-03，mine-wall-and-nav-icons）
 
 - 用 headless Chrome + CDP `Input.dispatchMouseEvent` 做真实点击才能验证地图选点；
   JS 合成 `MouseEvent` 能通不代表用户点得到（热区/遮挡/滚动位置都可能是真因）。

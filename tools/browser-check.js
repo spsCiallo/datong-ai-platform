@@ -438,10 +438,14 @@ function check(name, ok, detail) {
       vm.go('spots', true);
       await new Promise(r => setTimeout(r, 1200));
       const before = vm.collected;
+      const head = document.querySelector('.spot-head-tools');
+      // 打卡页不该再有「村庄地图」按钮：地图统一从顶部导航进，同一功能不留第二个入口
+      const hasMapBtn = !!(head && (head.textContent || '').indexOf('村庄地图') >= 0);
       vm.checkin(vm.spots[0]);
       await new Promise(r => setTimeout(r, 1600));
-      return { before: before, after: vm.collected, checked: !!(vm.spots[0] && vm.spots[0].checked) };
+      return { before: before, after: vm.collected, checked: !!(vm.spots[0] && vm.spots[0].checked), hasMapBtn: hasMapBtn };
     })()`);
+    check('点位打卡页已移除「村庄地图」按钮', spotOk && spotOk.hasMapBtn === false, JSON.stringify(spotOk));
     check('打卡后集章数 +1', spotOk && spotOk.after === spotOk.before + 1, JSON.stringify(spotOk));
     check('点位标记为已打卡', spotOk && spotOk.checked === true, JSON.stringify(spotOk));
     await screenshot('visitor-03-spots.png');
@@ -645,19 +649,32 @@ function check(name, ok, detail) {
     await screenshot('visitor-12-plan.png');
 
     // 我的
+    // 断言口径说明：这一屏的契约在 2026-11 改过 —— 原来的「集章 / 订单 / 消费」
+    // 三个数字格子换成了「我的集章墙」，菜单里的 AI 助手 / AI 行程规划 / 活动日历 /
+    // 去逛商城 四个入口按需求删除。所以这里检查的是新契约：集章墙真的渲染出印章、
+    // 菜单还剩「我的订单 / 举报中心」，且被删的四个入口确实不再出现。
     const mineOk = await v.evalJs(`(async () => {
       const vm = document.querySelector('#app').__vue__;
       vm.go('mine', true);
       await new Promise(r => setTimeout(r, 1500));
       const txt = document.body.innerText;
+      const wall = document.querySelector('.mine-wall');
       return {
         stamps: (vm.stamps || []).length,
-        hasWall: txt.indexOf('我的印章墙') >= 0,
-        hasMenu: txt.indexOf('AI 文旅助手') >= 0,
+        wallStamps: wall ? wall.querySelectorAll('.stamp.on').length : 0,
+        hasWall: txt.indexOf('我的集章墙') >= 0,
+        hasMenu: txt.indexOf('我的订单') >= 0 && txt.indexOf('举报中心') >= 0,
+        hasKpi: !!document.querySelector('.view-enter > .kpi'),
+        goneEntries: ['AI 文旅助手', 'AI 行程规划', '村内活动日历', '去逛商城']
+          .filter(function (s) { return txt.indexOf(s) >= 0; }),
       };
     })()`);
-    check('我的页渲染印章墙与菜单', mineOk && mineOk.hasWall && mineOk.hasMenu, JSON.stringify(mineOk));
-    check('我的页读了印章数据', mineOk && mineOk.stamps > 0, JSON.stringify(mineOk));
+    check('我的页渲染集章墙与菜单', mineOk && mineOk.hasWall && mineOk.hasMenu, JSON.stringify(mineOk));
+    check('我的页读了印章数据并渲染成印章墙',
+      mineOk && mineOk.stamps > 0 && mineOk.wallStamps === mineOk.stamps, JSON.stringify(mineOk));
+    check('我的页已移除集章/订单/消费三个数字格子', mineOk && mineOk.hasKpi === false, JSON.stringify(mineOk));
+    check('我的页已移除 AI 助手 / 行程规划 / 活动日历 / 去逛商城 四个入口',
+      mineOk && mineOk.goneEntries.length === 0, JSON.stringify(mineOk));
     await screenshot('visitor-13-mine.png');
 
     // 再次确认整轮操作没冒出新的 JS 异常
@@ -870,6 +887,40 @@ function check(name, ok, detail) {
     })()`);
     await cdp.send('Page.navigate', { url: BASE + '/visitor/' });
     await sleep(3400);
+
+    // 桌面顶部导航：5 个入口 + 每项左侧一枚 icons.svg 线条图标 + 点「村庄地图」能进地图页。
+    // 必须在这里量（1440px 视口），移动端 .nav-links 是 display:none，图标宽度恒为 0。
+    const navOk = await v.evalJs(`(async () => {
+      const vm = document.querySelector('#app').__vue__;
+      vm.go('home', true);
+      await new Promise(r => setTimeout(r, 1200));
+      const links = Array.prototype.slice.call(document.querySelectorAll('.nav-links a'));
+      const items = links.map(function (a) {
+        const svg = a.querySelector('svg');
+        const use = svg ? svg.querySelector('use') : null;
+        return {
+          text: (a.textContent || '').trim(),
+          hasSvg: !!svg,
+          w: svg ? Math.round(svg.getBoundingClientRect().width) : 0,
+          href: use ? (use.getAttribute('href') || use.getAttribute('xlink:href') || '') : '',
+        };
+      });
+      const mapLink = links.filter(function (a) { return (a.textContent || '').trim() === '村庄地图'; })[0];
+      let entered = '';
+      if (mapLink) { mapLink.click(); await new Promise(r => setTimeout(r, 1200)); entered = vm.view; }
+      vm.go('home', true);
+      await new Promise(r => setTimeout(r, 800));
+      return { items: items, entered: entered };
+    })()`);
+    const navItems = (navOk && navOk.items) || [];
+    check('顶部导航包含 5 个入口（含村庄地图）',
+      navItems.length === 5 && navItems.map(function (i) { return i.text; }).join('/') === '首页/打卡/村庄地图/商城/我的',
+      JSON.stringify(navOk));
+    check('桌面导航每项左侧都有图标',
+      navItems.length === 5 && navItems.every(function (i) { return i.hasSvg && i.w >= 12 && i.href.indexOf('icons.svg#i-') >= 0; }),
+      JSON.stringify(navItems));
+    check('顶部导航点村庄地图可进入地图页', navOk && navOk.entered === 'villageMap', JSON.stringify(navOk && navOk.entered));
+
     const state = await v.evalJs(`(async () => {
       const vm = document.querySelector('#app') && document.querySelector('#app').__vue__;
       if (vm && vm.user) { vm.go('mine', true); await new Promise(r => setTimeout(r, 900)); }

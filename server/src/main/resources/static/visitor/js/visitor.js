@@ -17,7 +17,9 @@
   var api = DT.api;
   var fmt = DT.fmt;
 
-  var TOP_VIEWS = ['home', 'spots', 'shop', 'mine'];
+  // villageMap 也放进来：顶部导航有它的入口，切过去要和其它 Tab 一样清空返回栈，
+  // 否则从首页点进去、再点导航回来，返回键会把用户退回地图。
+  var TOP_VIEWS = ['home', 'spots', 'villageMap', 'shop', 'mine'];
 
   /**
    * 子页面的「上级页面」。
@@ -626,11 +628,7 @@
       menus: function () {
         return [
           { key: 'orders', text: '我的订单', desc: '查看订单状态与取消', icon: 'i-ticket', view: 'orders', bg: '#E6F2ED', color: '#146B57' },
-          { key: 'wall', text: '我的印章墙', desc: '集齐全部印章领纪念品', icon: 'i-stamp', view: 'spots', tab: true, bg: '#FBEDE7', color: '#BE5230' },
-          { key: 'ai', text: 'AI 文旅助手', desc: '问村内的事，有知识库出处', icon: 'i-ai', view: 'ai', bg: '#EAF1F9', color: '#2F6BA8' },
-          { key: 'plan', text: 'AI 行程规划', desc: '按偏好编排 1-3 天路线', icon: 'i-map', view: 'plan', bg: '#FCF4E2', color: '#B07A18' },
-          { key: 'acts', text: '村内活动日历', desc: '非遗节庆与农事体验', icon: 'i-calendar', view: 'activities', bg: '#F1EEE7', color: '#5C6B65' },
-          { key: 'shop', text: '去逛商城', desc: '农产文创好物', icon: 'i-shop', view: 'shop', tab: true, bg: '#E8F4EE', color: '#2C7A57' },
+          { key: 'wall', text: '打卡集章', desc: '去点位打卡，集齐全部印章', icon: 'i-stamp', view: 'spots', tab: true, bg: '#FBEDE7', color: '#BE5230' },
           { key: 'reports', text: '举报中心', desc: '商家违规反馈与处理进度', icon: 'i-shield', view: 'reports', bg: '#FBEDE7', color: '#BE5230' },
         ];
       },
@@ -1692,7 +1690,13 @@
 
       /** 打开大同村虚拟地图整页（可选带一个要居中的对象 id） */
       openVillageMap: function (focusId) {
-        if (this.view !== 'villageMap') { this.go('villageMap'); }
+        if (this.view !== 'villageMap') {
+          // 与顶部导航区分：导航进入算「切 Tab」（清空返回栈），详情页的「看全图」
+          // 算「再进一层」，必须压栈，否则从商品详情看完全图、返回会掉到打卡页。
+          this.viewStack.push('villageMap');
+          this.view = 'villageMap';
+          this.onEnter('villageMap');
+        }
         this.mapPickedId = focusId ? String(focusId) : (this.current && this.current.id ? String(this.current.id) : '');
         window.scrollTo(0, 0);
         var self = this;

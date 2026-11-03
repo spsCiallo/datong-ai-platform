@@ -114,11 +114,23 @@
           <b>{{ site.shortName || '大同云' }}</b>
           <i>游客端</i>
         </a>
+        <!-- 桌面导航：每项左侧带一枚线条图标（icons.svg 的 symbol，随主题色变化） -->
         <nav class="nav-links">
-          <a :class="{ on: view === 'home' }" @click="go('home', true)">首页</a>
-          <a :class="{ on: view === 'spots' }" @click="go('spots', true)">打卡</a>
-          <a :class="{ on: view === 'shop' }" @click="go('shop', true)">商城</a>
-          <a :class="{ on: view === 'mine' }" @click="go('mine', true)">我的</a>
+          <a :class="{ on: view === 'home' }" @click="go('home', true)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use :href="iconHref('i-home')"/></svg><span>首页</span>
+          </a>
+          <a :class="{ on: view === 'spots' }" @click="go('spots', true)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use :href="iconHref('i-stamp')"/></svg><span>打卡</span>
+          </a>
+          <a :class="{ on: view === 'villageMap' }" @click="go('villageMap', true)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use :href="iconHref('i-map')"/></svg><span>村庄地图</span>
+          </a>
+          <a :class="{ on: view === 'shop' }" @click="go('shop', true)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use :href="iconHref('i-shop')"/></svg><span>商城</span>
+          </a>
+          <a :class="{ on: view === 'mine' }" @click="go('mine', true)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use :href="iconHref('i-user')"/></svg><span>我的</span>
+          </a>
         </nav>
         <div class="nav-right">
           <div class="theme-dots" title="主题">
@@ -237,10 +249,8 @@
               <h2>点位打卡</h2>
               <p class="muted">已集 {{ collected }} / {{ total }} 枚 · {{ progressText }}</p>
             </div>
+            <!-- 村庄地图统一从顶部导航进（同一功能不放第二个入口），这里只留点位/印章墙切换 -->
             <div class="spot-head-tools">
-              <button class="btn btn-ghost btn-sm" @click="openVillageMap()">
-                <svg viewBox="0 0 24 24" class="btn-ico"><use :href="iconHref('i-map')"/></svg>村庄地图
-              </button>
               <div class="seg">
                 <button :class="{ on: spotTab === 'spots' }" @click="spotTab = 'spots'">点位</button>
                 <button :class="{ on: spotTab === 'wall' }" @click="spotTab = 'wall'">印章墙</button>
@@ -1154,10 +1164,27 @@
               <input type="file" accept="image/*" hidden @change="onAvatarPick">
             </label>
           </div>
-          <div class="kpi mt-16">
-            <div class="kpi-item"><p class="kpi-label">集章</p><p class="kpi-value">{{ collected }}<small>/{{ total }}</small></p></div>
-            <div class="kpi-item accent"><p class="kpi-label">订单</p><p class="kpi-value">{{ orderCount }}</p></div>
-            <div class="kpi-item info"><p class="kpi-label">消费</p><p class="kpi-value small">{{ money(spent) }}</p></div>
+          <!-- 我的集章墙：原来这里是「集章 / 订单 / 消费」三个数字格子。
+               数字只能说明"集了几枚"，集章真正让人想晒的是印章本身，
+               所以整块换成直接展示已收集印章的墙，进度用一行小字带过。 -->
+          <div class="card pad mt-16 mine-wall-card">
+            <div class="mine-wall-head">
+              <div class="flex-1">
+                <b class="mine-wall-title">我的集章墙</b>
+                <p class="muted small">已集 {{ collected }} / {{ total }} 枚 · {{ progressText }}</p>
+              </div>
+              <button class="btn btn-ghost btn-sm" @click="go('spots', true)">去打卡</button>
+            </div>
+            <div v-if="stamps.length" class="wall mine-wall">
+              <div v-for="s in stamps" :key="s.id || s.spotId" class="stamp on" :title="s.spotName || ''">
+                <svg viewBox="0 0 24 24"><use :href="iconHref(spotIcon(s))"/></svg>
+                <b>{{ s.stamp }}</b>
+                <i>{{ s.spotName }}</i>
+              </div>
+            </div>
+            <p v-else class="muted small mine-wall-empty">
+              还没有印章。去点位打卡，每打卡一个点位就能在这里盖上一枚印章。
+            </p>
           </div>
 
           <!-- 主题切换上移到「我的」首屏：原来放在菜单列表下面，手机要滑两屏才看得到，
@@ -1275,6 +1302,10 @@
         </a>
         <a :class="{ on: view === 'spots' }" @click="go('spots', true)">
           <svg viewBox="0 0 24 24"><use :href="iconHref('i-stamp')"/></svg><span>打卡</span>
+        </a>
+        <!-- 移动端没有顶部导航，地图入口放这里，保证打卡页删掉那个按钮后手机上仍然进得去 -->
+        <a :class="{ on: view === 'villageMap' }" @click="go('villageMap', true)">
+          <svg viewBox="0 0 24 24"><use :href="iconHref('i-map')"/></svg><span>地图</span>
         </a>
         <a :class="{ on: view === 'shop' }" @click="go('shop', true)">
           <svg viewBox="0 0 24 24"><use :href="iconHref('i-shop')"/></svg><span>商城</span>
