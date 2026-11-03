@@ -160,15 +160,21 @@
                  以前把「再集 N 枚即可通关」也塞进圆心，14 段环 + 三行字互相压，
                  字号一缩小就糊成一团 —— 现在文案挪到圆环下方单独一行。 -->
             <div class="hero-ring">
-              <div class="ring-wrap">
-                <svg viewBox="0 0 128 128" class="ring">
+              <div class="ring-wrap" :class="{ done: ringDone }">
+                <!-- 扇区颜色交给 CSS 的 .seg-on / .seg-off 管：
+                     以前点亮段用 var(--brand) 填充，而 .hero 背景本身就是品牌色渐变，
+                     等于把品牌色画在同色底上 —— 点亮的段"看不见"，全打卡后整圈糊成一片
+                     实心色，用户反而觉得"全部变暗"。现在点亮段是白色、未点亮段是半透明白，
+                     集满时再整体转金色（.ring.done），"完成"才有明确的视觉语言。 -->
+                <svg viewBox="0 0 128 128" class="ring" :class="{ done: ringDone }">
                   <g v-if="!ringEmpty">
                     <path v-for="(s, i) in ringSegments" :key="i" :d="s.d"
-                          :fill="s.checked ? 'var(--brand)' : 'var(--surface-3)'"/>
+                          :class="s.checked ? 'seg-on' : 'seg-off'"
+                          :data-on="s.checked ? '1' : '0'"/>
                   </g>
                   <circle cx="64" cy="64" r="45" fill="none" stroke="var(--line)" stroke-width="1.5" v-if="ringEmpty"/>
                 </svg>
-                <div class="ring-num">
+                <div class="ring-num" :class="{ done: ringDone }">
                   <b>{{ collected }}</b>
                   <span>/ {{ total }}</span>
                 </div>

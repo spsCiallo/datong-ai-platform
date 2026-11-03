@@ -410,7 +410,7 @@ function check(name, ok, detail) {
         hasGoods: txt.indexOf('热门好物') >= 0 || txt.indexOf('去逛商城') >= 0,
         ring: {
           count: segs.length,
-          lit: segs.filter(function (p) { return p.getAttribute('fill') !== null && p.getAttribute('fill').indexOf('brand') >= 0 || p.getAttribute('fill') === 'var(--brand)'; }).length,
+          lit: segs.filter(function (p) { return p.getAttribute('data-on') === '1'; }).length,
           empty: segs.filter(function (p) { return !p.getAttribute('d'); }).length,
           w: box ? Math.round(box.width) : 0,
           h: box ? Math.round(box.height) : 0,

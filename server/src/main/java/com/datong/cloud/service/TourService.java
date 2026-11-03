@@ -159,8 +159,14 @@ public class TourService {
             if (item.get("stamp") == null && spot != null) {
                 item.put("stamp", spot.get("stamp"));
             }
-            if (item.get("stampIcon") == null) {
-                item.put("stampIcon", spot == null ? "章" : spot.get("stampIcon"));
+            // 图标以点位上的配置为准：印章记录里的 stampIcon 可能是历史脏数据
+            // （早期 stamps.stampIcon 只有 VARCHAR(8)，i-mountain 被截成 i-mounta，
+            //   前端在 icons.svg 里找不到该 symbol，印章就渲染成空白）。
+            Object spotIcon = spot == null ? null : spot.get("stampIcon");
+            if (spotIcon != null && !String.valueOf(spotIcon).trim().isEmpty()) {
+                item.put("stampIcon", spotIcon);
+            } else if (item.get("stampIcon") == null) {
+                item.put("stampIcon", "章");
             }
             list.add(item);
         }

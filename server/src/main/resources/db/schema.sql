@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS `stamps` (
   `spotId`    VARCHAR(32) NOT NULL COMMENT '点位 id',
   `spotName`  VARCHAR(64) DEFAULT NULL COMMENT '点位名称（冗余，避免每次联表）',
   `stamp`     VARCHAR(32) DEFAULT NULL COMMENT '印章名称',
-  `stampIcon` VARCHAR(8)  DEFAULT NULL COMMENT '印章图标',
+  `stampIcon` VARCHAR(32) DEFAULT NULL COMMENT '印章图标（形如 i-mountain，与 spots.stampIcon 同宽）',
   `at`        VARCHAR(32) DEFAULT NULL COMMENT '打卡时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_stamps_seq` (`seq`),

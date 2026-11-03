@@ -176,6 +176,7 @@ select.input { appearance: auto; }
   .view-enter, .view-enter > .card, .view-enter > .kpi,
   .view-enter > .menus, .view-enter > .mine-actions, .view-enter > .goods-grid,
   .view-enter > .spot-grid, .view-enter > .grid-entries { animation: none; }
+  .ring-wrap.done { animation: none; }
 }
 
 /* ----------------------------- 导航 ----------------------------- */
@@ -255,7 +256,20 @@ select.input { appearance: auto; }
    一旦字号或圆环尺寸变化就压到扇区上，14 段时尤其明显。 */
 .hero-ring { display: grid; place-items: center; gap: 10px; }
 .ring-wrap { position: relative; width: 148px; height: 148px; display: grid; place-items: center; }
-.ring { width: 148px; height: 148px; filter: drop-shadow(0 6px 16px rgba(0,0,0,.18)); }
+.ring { width: 148px; height: 148px; filter: drop-shadow(0 6px 16px rgba(0,0,0,.18)); transition: filter .4s; }
+/* 扇区配色：底色是品牌色渐变，所以「点亮」必须比底色更亮（白色），
+   「未点亮」用半透明白压暗一档 —— 一眼就能分清进度方向。 */
+.ring path.seg-off { fill: rgba(255, 255, 255, .22); transition: fill .3s; }
+.ring path.seg-on { fill: #fff; transition: fill .3s; }
+/* 完成态：整圈转金色 + 外发光 + 极轻的呼吸，表示"全部点亮" */
+.ring.done { filter: drop-shadow(0 6px 16px rgba(0,0,0,.18)) drop-shadow(0 0 10px rgba(255, 212, 106, .55)); }
+.ring.done path.seg-on { fill: #FFD46A; }
+.ring.done path.seg-off { fill: rgba(255, 212, 106, .22); }
+@keyframes ringDonePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.035); }
+}
+.ring-wrap.done { animation: ringDonePulse 2.6s ease-in-out infinite; }
 /* 圆心留白半径 45（内圈），文字块宽度不超过 2*45-8，保证永远压不到扇区 */
 .ring-num {
   position: absolute;
@@ -269,6 +283,8 @@ select.input { appearance: auto; }
 }
 .ring-num b { font-size: 30px; line-height: 1; font-weight: 700; letter-spacing: -.5px; }
 .ring-num span { font-size: 12px; opacity: .8; transform: translateY(4px); }
+.ring-num.done b { color: #FFD46A; }
+.ring-num.done span { color: rgba(255, 212, 106, .9); opacity: 1; }
 .ring-note {
   margin: 0;
   font-size: 12px;

@@ -162,10 +162,21 @@ public class DatabaseBootstrap {
                 ensureColumn(conn, "orders", "refundedAt", "VARCHAR(32) NULL COMMENT '退款时间'");
                 ensureColumn(conn, "orders", "refundNote", "VARCHAR(255) NULL COMMENT '退款说明'");
 
+                // ②.6 印章图标列加宽（幂等）：stamps.stampIcon 早期是 VARCHAR(8)，
+                //      i-mountain（10 字符）入库会被 MySQL 静默截成 i-mounta，
+                //      前端拿不到 icons.svg 里的同名 symbol，印章就显示成空白。
+                //      schema.sql 改了也影响不到已存在的表，所以这里单独按「容量不足才改」处理。
+                ensureColumnWidth(conn, "stamps", "stampIcon", 32,
+                        "VARCHAR(32) NULL COMMENT '印章图标（形如 i-mountain）'");
+
                 // ③ 灌演示数据（幂等）
                 if (db.isSeedOnStart()) {
                     runScript(conn, "db/seed.sql");
                 }
+
+                // ③.5 修历史坏数据（幂等）：列加宽只保证以后不再截断，
+                //      已经存进去的 i-mounta 还得用点位上的完整图标覆盖回来。
+                repairTruncatedStampIcons(conn);
 
                 List<String> counts = tableCounts(conn);
                 summary = String.format("MySQL %s:%d/%s（账号 %s）· %s%s",
@@ -241,6 +252,63 @@ public class DatabaseBootstrap {
             log.info("[db] 已为 {} 补上 {} 列", table, column);
         } catch (SQLException e) {
             log.warn("[db] 为 {} 补 {} 列失败（可能有并发启动）：{}", table, column, e.getMessage());
+        }
+    }
+
+    /**
+     * 幂等改列宽：只在「列当前容量小于要求」时才 MODIFY，已经是够宽的就什么都不做。
+     *
+     * <p>MySQL 没有 {@code MODIFY COLUMN IF SMALLER}，只能先查 information_schema；
+     * 列不存在时交给 {@link #ensureColumn} 处理，这里直接返回，避免把 ADD 的活干重。
+     */
+    private void ensureColumnWidth(Connection conn, String table, String column, int minLength, String definition) {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS "
+                        + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?")) {
+            ps.setString(1, table);
+            ps.setString(2, column);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    // 列还没有（新库由 schema.sql 建，这里只兜老库的罕见缺列）
+                    ensureColumn(conn, table, column, definition);
+                    return;
+                }
+                long len = rs.getLong(1);
+                if (!rs.wasNull() && len >= minLength) {
+                    return;
+                }
+            }
+        } catch (SQLException e) {
+            log.warn("[db] 检查 {} . {} 列宽失败：{}", table, column, e.getMessage());
+            return;
+        }
+        try (Statement st = conn.createStatement()) {
+            st.executeUpdate("ALTER TABLE `" + table + "` MODIFY COLUMN `" + column + "` " + definition);
+            log.info("[db] 已把 {} . {} 加宽到 {} 字符", table, column, minLength);
+        } catch (SQLException e) {
+            log.warn("[db] 加宽 {} . {} 列失败：{}", table, column, e.getMessage());
+        }
+    }
+
+    /**
+     * 幂等修复被截断的印章图标。
+     *
+     * <p>只修「stored 是 spot 图标的严格前缀」这一种情况 —— 那必然是当年 VARCHAR(8) 截断的产物；
+     * 管理员在点位上换过图标也照样能同步过来，而人工特意设计过的不一致不会被误伤。
+     */
+    private void repairTruncatedStampIcons(Connection conn) {
+        String sql = "UPDATE `stamps` s JOIN `spots` p ON p.id = s.spotId "
+                + "SET s.stampIcon = p.stampIcon "
+                + "WHERE p.stampIcon IS NOT NULL AND s.stampIcon IS NOT NULL "
+                + "AND s.stampIcon <> p.stampIcon "
+                + "AND LEFT(p.stampIcon, CHAR_LENGTH(s.stampIcon)) = s.stampIcon";
+        try (Statement st = conn.createStatement()) {
+            int n = st.executeUpdate(sql);
+            if (n > 0) {
+                log.info("[db] 已修复 {} 条被截断的印章图标", n);
+            }
+        } catch (SQLException e) {
+            log.warn("[db] 修复印章图标失败：{}", e.getMessage());
         }
     }
 

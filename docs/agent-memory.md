@@ -113,6 +113,18 @@
   字典序比数字大，老订单永远置顶。先 `trim()` 再兜底。（2026-11-02，orders-and-navigation）
 - 探针里调 `vm.buyNow()` 前必须设 `vm.address`，否则被 `toast('请填写收货地址')`
   静默拦下，后续断言会全落在旧数据上。（2026-11-02，orders-and-navigation）
+- **列宽不足会被 MySQL 静默截断**（不报错、不警告）。`stamps.stampIcon` 曾是 `VARCHAR(8)`，
+  `i-mountain`(10) 入库变 `i-mounta`。判断这类问题看「同一字段在两张表里值不同」最快。
+  （2026-11-03，stamp-and-back-navigation）
+- `assets/img/icons.svg` 的 symbol 清单在 `spot-icons.js` 的 `KNOWN` 数组里手写维护，
+  **新增 symbol 必须同步补进去**，否则会被兜底成 `i-stamp`。（2026-11-03，stamp-and-back-navigation）
+- 游客端返回目标由 `go()` 决定：非顶层视图下钻时若 `viewStack` 为空，会先把**当前视图**压栈当来源页。
+  新增「从某页跳详情」的入口不用再单独写返回逻辑，`PARENT_VIEW` 只作栈空兜底。
+  （2026-11-03，stamp-and-back-navigation）
+- 扇形图/进度环的「点亮」不要用与容器背景同色的品牌色填充（本项目 `.hero` 就是品牌色渐变，
+  同色叠加导致「全部打卡后整圈看起来变暗」）。点亮用白色、完成态用金色。（2026-11-03，stamp-and-back-navigation）
+- headless Chrome 的 `--user-data-dir` **必须传绝对路径**，相对路径会启动失败并报
+  *"DevTools remote debugging requires a non-default data directory"*。（2026-11-03，stamp-and-back-navigation）
 ## 踩坑
 
 - `job_kill` 杀掉挂着的中转 job 会连带杀掉它管理的 java 进程，杀完必须复查

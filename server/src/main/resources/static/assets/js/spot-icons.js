@@ -36,17 +36,36 @@ window.DTSpotIcons = (function () {
     '休闲空间': 'i-tea'
   };
 
+  /* icons.svg 里真实存在的 symbol 名单。
+     必须校验：库里存过的 stampIcon 可能是历史截断值（stamps.stampIcon 早年只有
+     VARCHAR(8)，'i-mountain' 被截成 'i-mounta'），直接拿去拼 <use href> 会指向
+     一个不存在的 symbol —— 印章图标整块空白，页面上看不出任何报错。
+     不在名单里的 i-xxx 一律当作「没配」，继续走后面的兜底链路。 */
+  var KNOWN = ('i-info i-flower i-mountain i-river i-fort i-museum i-book i-jar i-noodle i-home '
+    + 'i-market i-tea i-craft i-star i-stamp i-ai i-bed i-calendar i-ticket i-map i-shop i-shield '
+    + 'i-user i-cart i-search i-close i-check i-plus i-minus i-play i-pause i-mic i-camera i-phone '
+    + 'i-location i-clock i-moon i-sun i-heart i-gift i-send i-image i-chat i-logout i-arrow-right '
+    + 'i-theme i-refresh i-lock i-mail i-rice i-leaf i-radish i-bamboo i-path i-bed2').split(' ');
+
+  var KNOWN_SET = {};
+  for (var ki = 0; ki < KNOWN.length; ki++) { KNOWN_SET[KNOWN[ki]] = true; }
+
+  /** 这个图标名是不是 icons.svg 里真实存在的 symbol */
+  function isKnown(name) {
+    return !!name && KNOWN_SET[name] === true;
+  }
+
   /** 传入点位对象、印章记录（含 spotId）或 id 字符串，返回图标名 */
   function iconOf(spot) {
     if (!spot) { return 'i-stamp'; }
     if (typeof spot === 'string') {
       return BY_ID[spot] || 'i-stamp';
     }
-    // ① 新版管理员选的图标（i-flower 这类 key）优先；
+    // ① 新版管理员选的图标（i-flower 这类 key）优先，但必须在 icons.svg 里真实存在；
     // ② 旧版单字走 BY_CHAR 兼容；
     // ③ 再按点位 id / 类型兜底。
     var raw = String(spot.stampIcon || '').trim();
-    if (raw.indexOf('i-') === 0) { return raw; }
+    if (isKnown(raw)) { return raw; }
     if (raw && BY_CHAR[raw]) { return BY_CHAR[raw]; }
     // 顺序很重要：印章记录自带 id（st1/st2…），必须先看 spotId，
     // 否则会拿 st3 去查点位映射，永远查不到、全部退回默认印章。
@@ -79,5 +98,5 @@ window.DTSpotIcons = (function () {
       + 'Z';
   }
 
-  return { iconOf: iconOf, ringSegment: ringSegment, BY_ID: BY_ID };
+  return { iconOf: iconOf, ringSegment: ringSegment, BY_ID: BY_ID, isKnown: isKnown };
 })();

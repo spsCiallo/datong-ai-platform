@@ -32,7 +32,9 @@
    */
   var PARENT_VIEW = {
     spotDetail: 'spots',
-    villageMap: 'spots',
+    // 地图本身是顶层 Tab（顶部导航 / 底部 tabbar 都能直达），栈空时按其它 Tab 的
+    // 惯例回首页；从详情页点进来的情况由 go() 记的来源页负责，不会走到这条兜底。
+    villageMap: 'home',
     productDetail: 'shop',
     booking: 'shop',
     activityDetail: 'activities',
@@ -610,6 +612,21 @@
       /** 扇形图是否应显示「暂无点位」占位（点位没加载到 / 总数为 0） */
       ringEmpty: function () {
         return !this.ringSegments.length;
+      },
+
+      /**
+       * 是否已集满全部印章（完成态）。
+       *
+       * 用途：完成时圆环整体转金色并轻微呼吸，明确表达"全部点亮/通关"。
+       * 为什么要单独算：点亮段数在 ringSegments 里已按比例映射过（>60 个点位会压缩段数），
+       * 那里判断"全部点亮"不直观；这里直接用 collected / total 判定，与数字口径一致。
+       */
+      ringDone: function () {
+        var total = Number(this.total);
+        var got = Number(this.collected);
+        if (!isFinite(total) || total <= 0) { return false; }
+        if (!isFinite(got)) { got = 0; }
+        return got >= total;
       },
 
       /* 首页功能宫格：按需求把「我的订单」放在「活动日历」与「AI 助手」之间 */
@@ -1314,6 +1331,20 @@
           this.view = view;
           this.viewStack = [];
         } else {
+          /**
+           * 【返回目标 = 来源页】栈里只记「子页面链」，顶层 Tab 一进来就把栈清空了，
+           * 于是「首页 → 商品详情」「地图 → 点位详情」这类从顶层页直接下钻的场景，
+           * 栈里只剩目标页一层，返回时只能靠 PARENT_VIEW 死规定（商品回商城、
+           * 点位回打卡页），跟用户的来路完全对不上 —— 地图里点个点位，返回却跳到打卡页。
+           *
+           * 现在下钻时若栈是空的，先把「当前所在的页」压进去当来源页；
+           * 栈非空时不动（栈顶本来就是来源页），PARENT_VIEW 退化成兜底。
+           * 这样：地图→详情 返回地图；首页→详情 返回首页；商城→详情 返回商城，
+           * 不用给每个入口单独写跳转分支。
+           */
+          if (!this.viewStack.length && this.view && this.view !== view) {
+            this.viewStack.push(this.view);
+          }
           this.view = view;
           this.viewStack.push(view);
         }

@@ -217,8 +217,12 @@ public class AdminService {
                 if (item.get("stamp") == null && spot != null) {
                     item.put("stamp", spot.get("stamp"));
                 }
-                if (item.get("stampIcon") == null) {
-                    item.put("stampIcon", spot == null ? "章" : spot.get("stampIcon"));
+                // 同 TourService.stamps()：图标以点位配置为准，避免历史截断值透传
+                Object spotIcon = spot == null ? null : spot.get("stampIcon");
+                if (spotIcon != null && !String.valueOf(spotIcon).trim().isEmpty()) {
+                    item.put("stampIcon", spotIcon);
+                } else if (item.get("stampIcon") == null) {
+                    item.put("stampIcon", "章");
                 }
                 stamps.add(item);
             }
