@@ -141,3 +141,13 @@
 - 用 Word COM 统计 docx 页数前必须把文件复制到纯 ASCII 路径，中文路径会报「文档可能已损坏」。
 - python-docx 保存遇到 `PermissionError`  = Word 正开着该文件，关掉 Word 即可。
 - PowerShell `-File` 执行含中文路径的脚本时文件必须带 UTF-8 BOM，否则报 FileNotFoundException。
+
+## 登录页与配图（2026-11-05，来源：2026-11-05-login-and-chinese-images.md）
+
+- 游客端登录页布局三档：`≥1181px` 1.25fr/1fr；`901–1180px` 1fr/1fr（卡片 368px）；`≤900px` 190px 横幅 + 表单。
+  卡片 `max-width: 396px`、输入框 44px、按钮 46px——改这里要同时看这三档，只调一档会把另外两档挤坏。
+- 登录页实景图是 `assets/img/photo/village-hero.jpg`，配 `.auth-veil` 渐变遮罩保证白字可读；换图时遮罩不能删。
+- 全部配图主题（41 个 base）已中文化：只允许中国村庄/农产品/农事/民俗真实照片，禁止外国人/英文/外国建筑。
+- Wikimedia Commons 检索必须 `iiprop=url|size|mime` 并只收 `image/jpeg`，还要过滤 `.djvu/.pdf/.svg/.tif`，
+  否则会命中 CADAL 扫描书；标题含地名不代表画面合格，必须逐张目检（曾误抓重庆大厦旅馆、佛山炖汤招牌等）。
+- Commons API 每条查询间隔 0.2–0.3s，单次 `run_code` 上限 560s，一次最多跑 20 个 key，多的要分批。

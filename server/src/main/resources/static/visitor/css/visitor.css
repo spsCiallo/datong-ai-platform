@@ -116,22 +116,39 @@ select.input { appearance: auto; }
 
 /* ----------------------------- 登录页 ----------------------------- */
 
-.auth { min-height: 100vh; display: grid; grid-template-columns: 1.15fr 1fr; }
+/* 左右比例 1.25 : 1，左图右表单；卡片固定 380–420px 之间，输入框长度由卡片宽度决定，
+   不再出现「宽屏拉成一条」「窄屏挤成方块」的问题。 */
+.auth { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
 .auth-visual { position: relative; overflow: hidden; background: var(--brand-deep); }
-.auth-hero { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .92; }
-.auth-brand { position: absolute; top: 8%; left: 8%; color: #fff; }
-.auth-brand img { width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.3)); }
-.auth-brand h1 { font-size: 32px; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,.35); }
-.auth-brand p { margin: 6px 0 0; opacity: .92; text-shadow: 0 1px 8px rgba(0,0,0,.4); }
-.auth-feats { position: absolute; left: 8%; bottom: 8%; display: grid; gap: 8px; color: #fff; margin: 0; padding: 0; list-style: none; }
-.auth-feats li { background: rgba(0,0,0,.28); backdrop-filter: blur(6px); padding: 8px 14px; border-radius: 999px; font-size: 13px; }
-.auth-panel { display: grid; place-items: center; padding: 32px 24px; }
-.auth-card { width: 100%; max-width: 400px; padding: 24px; }
-.auth-tabs { display: flex; gap: 8px; margin-bottom: 18px; background: var(--surface-2); border-radius: 999px; padding: 4px; }
-.auth-tabs button { flex: 1; height: 38px; border: none; border-radius: 999px; background: transparent; color: var(--text-2); font-size: 14.5px; font-weight: 600; }
+.auth-hero { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 58%; }
+/* 照片压一层暖色渐变遮罩，保证左上角品牌字与底部卖点在任何照片上都清晰 */
+.auth-veil {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(43,20,16,.62) 0%, rgba(43,20,16,.12) 34%, rgba(43,20,16,.10) 62%, rgba(43,20,16,.66) 100%),
+    linear-gradient(100deg, rgba(192,57,43,.30) 0%, rgba(192,57,43,.04) 52%);
+}
+.auth-brand { position: absolute; top: 8%; left: 7.5%; color: #fff; max-width: 78%; }
+.auth-brand img { width: 52px; height: 52px; margin-bottom: 12px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.35)); }
+.auth-brand h1 { font-size: 31px; line-height: 1.15; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+.auth-brand p { margin: 8px 0 0; font-size: 14px; line-height: 1.6; opacity: .95; text-shadow: 0 1px 8px rgba(0,0,0,.45); }
+.auth-feats { position: absolute; left: 7.5%; right: 7.5%; bottom: 8%; display: grid; gap: 8px; color: #fff; margin: 0; padding: 0; list-style: none; justify-items: start; }
+.auth-feats li { background: rgba(0,0,0,.30); backdrop-filter: blur(6px); padding: 7px 13px; border-radius: 999px; font-size: 12.5px; white-space: nowrap; }
+
+/* 表单侧：垂直居中，左右留白随视口收放 */
+.auth-panel { display: grid; place-items: center; padding: 40px 40px; background: var(--bg); }
+.auth-card {
+  width: 100%; max-width: 396px; padding: 30px 32px 28px;
+  border-radius: 20px; box-shadow: var(--shadow);
+}
+.auth-tabs { display: flex; gap: 6px; margin-bottom: 22px; background: var(--surface-2); border-radius: 999px; padding: 4px; }
+.auth-tabs button { flex: 1; height: 40px; border: none; border-radius: 999px; background: transparent; color: var(--text-2); font-size: 14.5px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s; }
+.auth-tabs button:hover { color: var(--brand); }
 .auth-tabs button.on { background: var(--brand); color: #fff; }
-.auth-form { display: grid; gap: 14px; }
-.auth-form .btn { margin-top: 4px; }
+.auth-form { display: grid; gap: 16px; }
+.auth-form .field > span { font-size: 12.5px; margin-bottom: 7px; }
+.auth-form .input { height: 44px; font-size: 14px; border-radius: 10px; }
+.auth-form .btn { height: 46px; margin-top: 6px; font-size: 15px; letter-spacing: .06em; }
 .known { margin-top: 18px; border-top: 1px dashed var(--line); padding-top: 14px; }
 .known-title { margin: 0 0 10px; font-size: 13px; color: var(--text-2); }
 .known-title small { color: var(--text-3); font-weight: 400; }
@@ -644,6 +661,14 @@ select.input { appearance: auto; }
 
 /* ----------------------------- 响应式 ----------------------------- */
 
+@media (max-width: 1180px) and (min-width: 901px) {
+  .auth { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .auth-panel { padding: 32px 28px; }
+  .auth-card { max-width: 368px; padding: 26px 26px 24px; }
+  .auth-brand h1 { font-size: 27px; }
+  .auth-feats li { font-size: 12px; padding: 6px 11px; }
+}
+
 @media (max-width: 1024px) {
   .goods-grid { grid-template-columns: repeat(3, 1fr); }
   .spot-grid { grid-template-columns: repeat(2, 1fr); }
@@ -664,9 +689,16 @@ select.input { appearance: auto; }
 @media (max-width: 900px) {
   .nav-links { display: none; }
   .tabbar { display: flex; }
-  .auth { grid-template-columns: 1fr; }
-  .auth-visual { min-height: 220px; }
+  .auth { grid-template-columns: 1fr; grid-template-rows: 190px 1fr; min-height: 100vh; }
+  .auth-visual { min-height: 190px; }
+  .auth-hero { object-position: center 62%; }
+  .auth-brand { top: 22px; left: 20px; }
+  .auth-brand img { width: 38px; height: 38px; margin-bottom: 8px; }
+  .auth-brand h1 { font-size: 22px; }
+  .auth-brand p { font-size: 12px; margin-top: 4px; }
   .auth-feats { display: none; }
+  .auth-panel { padding: 22px 18px 30px; align-items: start; }
+  .auth-card { max-width: 460px; padding: 22px 20px 20px; border-radius: 16px; box-shadow: var(--shadow-sm); }
   .hero { grid-template-columns: 1fr; text-align: left; }
   .hero-ring { justify-items: start; }
   .ring-wrap { width: 132px; height: 132px; }

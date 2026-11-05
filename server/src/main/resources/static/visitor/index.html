@@ -32,7 +32,8 @@
     <!-- ==================== 登录 / 注册 ==================== -->
     <div v-if="!user" class="auth">
       <div class="auth-visual">
-        <img class="auth-hero" src="../assets/img/hero.svg" alt="大同村">
+        <img class="auth-hero" src="../assets/img/photo/village-hero.jpg" alt="大同村村落实景">
+        <div class="auth-veil"></div>
         <div class="auth-brand">
           <img src="../assets/img/logo.svg" alt="">
           <h1>{{ site.shortName || '大同云' }}</h1>
@@ -42,7 +43,7 @@
           <li>14 个点位打卡集章</li>
           <li>农产文创 / 研学民宿一站预约</li>
           <li>AI 助手 · 行程规划</li>
-          <li>电脑手机同一套界面</li>
+          <li>大同村手绘地图 · 一图看全村</li>
         </ul>
       </div>
       <div class="auth-panel">
@@ -100,7 +101,6 @@
           </div>
           <p class="auth-tip" v-else-if="!knownLoading">还没有可快捷登录的账号，请注册或用账号密码登录一次。</p>
         </div>
-        <p class="auth-foot">游客端 · 电脑手机共用一套界面 · {{ site.name || '大同村农商文旅智慧平台' }}</p>
       </div>
     </div>
 
