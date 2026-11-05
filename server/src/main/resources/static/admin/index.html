@@ -749,7 +749,7 @@
             <div class="img-set-row" v-for="(img, i) in formImages" :key="i">
               <img v-if="img" :src="img" class="thumb" alt="">
               <div class="flex-1" style="min-width:0">
-                <el-input v-model="formImages[i]" size="small" placeholder="/assets/img/art/goods-huanghua.svg"></el-input>
+                <el-input v-model="formImages[i]" size="small" placeholder="/assets/img/photo/goods-huanghua.jpg"></el-input>
                 <div class="img-set-tip">
                   <span v-if="i === 0" class="tag brand">封面</span>
                   <span v-else class="dim">第 {{ i + 1 }} 张</span>
@@ -768,7 +768,7 @@
             </div>
             <div class="dim" style="font-size:12px;margin-top:8px;line-height:1.6">
               第一张作为封面与列表缩略图；游客端商品详情会轮播全部图片（建议 ≥3 张）。
-              图片取自 assets/img/art 目录下由 tools/make-art.js 生成的插画，填写相对路径即可（形如 ../assets/img/art/goods-huanghua.svg）。
+              图片取自 assets/img/photo 目录下的实景照片，填写相对路径即可（形如 ../assets/img/photo/goods-huanghua.jpg）。
             </div>
           </div>
         </el-form-item>

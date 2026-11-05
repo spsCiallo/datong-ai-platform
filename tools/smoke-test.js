@@ -155,7 +155,7 @@ function section(title) {
     check('静态页面可访问 ' + p, r.status === 200, 'HTTP ' + r.status);
   }
 
-  const assets = ['/assets/css/app.css', '/assets/img/art/spot-service.svg', '/assets/img/logo.svg', '/vendors/vue.min.js', '/vendors/element-ui.js'];
+  const assets = ['/assets/css/app.css', '/assets/img/photo/spot-service.jpg', '/assets/img/logo.svg', '/vendors/vue.min.js', '/vendors/element-ui.js'];
   for (const a of assets) {
     const r = await req('GET', a);
     check('静态资源可访问 ' + a, r.status === 200, 'HTTP ' + r.status);

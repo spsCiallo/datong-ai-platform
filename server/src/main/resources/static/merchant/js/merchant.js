@@ -210,16 +210,16 @@
         formImages: [''], mapContext: [],
         aiVariants: [], aiIndex: 0, aiGeneratedBy: '',
         covers: [
-          '/assets/img/art/goods-huanghua.svg', '/assets/img/art/goods-sauce.svg', '/assets/img/art/goods-millet.svg',
-          '/assets/img/art/goods-oil.svg', '/assets/img/art/goods-flour.svg', '/assets/img/art/goods-hotpot.svg',
-          '/assets/img/art/goods-kettle.svg', '/assets/img/art/goods-paper.svg', '/assets/img/art/goods-tiger.svg',
-          '/assets/img/art/goods-room.svg', '/assets/img/art/goods-yard.svg', '/assets/img/art/goods-wetland-class.svg',
-          '/assets/img/art/goods-mill-class.svg', '/assets/img/art/goods-pick.svg', '/assets/img/art/goods-feast.svg',
-          '/assets/img/art/goods-tea-set.svg',
-          '/assets/img/art/goods-suite.svg', '/assets/img/art/goods-tent.svg',
-          '/assets/img/art/goods-farm.svg', '/assets/img/art/goods-press.svg',
-          '/assets/img/art/goods-thresh.svg', '/assets/img/art/goods-bird.svg',
-          '/assets/img/art/goods-fort-class.svg', '/assets/img/art/goods-copper-class.svg'
+          '/assets/img/photo/goods-huanghua.jpg', '/assets/img/photo/goods-sauce.jpg', '/assets/img/photo/goods-millet.jpg',
+          '/assets/img/photo/goods-oil.jpg', '/assets/img/photo/goods-flour.jpg', '/assets/img/photo/goods-hotpot.jpg',
+          '/assets/img/photo/goods-kettle.jpg', '/assets/img/photo/goods-paper.jpg', '/assets/img/photo/goods-tiger.jpg',
+          '/assets/img/photo/goods-room.jpg', '/assets/img/photo/goods-yard.jpg', '/assets/img/photo/goods-wetland-class.jpg',
+          '/assets/img/photo/goods-mill-class.jpg', '/assets/img/photo/goods-pick.jpg', '/assets/img/photo/goods-feast.jpg',
+          '/assets/img/photo/goods-tea-set.jpg',
+          '/assets/img/photo/goods-suite.jpg', '/assets/img/photo/goods-tent.jpg',
+          '/assets/img/photo/goods-farm.jpg', '/assets/img/photo/goods-press.jpg',
+          '/assets/img/photo/goods-thresh.jpg', '/assets/img/photo/goods-bird.jpg',
+          '/assets/img/photo/goods-fort-class.jpg', '/assets/img/photo/goods-copper-class.jpg'
         ],
         fmt: fmt
       };

@@ -578,11 +578,11 @@
         aiSaving: false, aiTesting: false,
         bookVisible: false, bookingActivity: {}, bookings: [], bookingSaving: false,
         covers: [
-          '/assets/img/art/spot-service.svg', '/assets/img/art/spot-huanghua.svg', '/assets/img/art/spot-terrace.svg',
-          '/assets/img/art/spot-river.svg', '/assets/img/art/spot-fort.svg', '/assets/img/art/spot-museum.svg',
-          '/assets/img/art/spot-study.svg', '/assets/img/art/spot-oil.svg', '/assets/img/art/spot-noodle.svg',
-          '/assets/img/art/spot-courtyard.svg', '/assets/img/art/spot-market.svg', '/assets/img/art/spot-tea.svg',
-          '/assets/img/art/spot-copper.svg', '/assets/img/art/spot-camp.svg'
+          '/assets/img/photo/spot-service.jpg', '/assets/img/photo/spot-huanghua.jpg', '/assets/img/photo/spot-terrace.jpg',
+          '/assets/img/photo/spot-river.jpg', '/assets/img/photo/spot-fort.jpg', '/assets/img/photo/spot-museum.jpg',
+          '/assets/img/photo/spot-study.jpg', '/assets/img/photo/spot-oil.jpg', '/assets/img/photo/spot-noodle.jpg',
+          '/assets/img/photo/spot-courtyard.jpg', '/assets/img/photo/spot-market.jpg', '/assets/img/photo/spot-tea.jpg',
+          '/assets/img/photo/spot-copper.jpg', '/assets/img/photo/spot-camp.jpg'
         ],
         /* 印章图标字典：与 assets/img/icons.svg 里的 <symbol id> 一一对应。
            以前是「印章单字」自由输入，游客端实际按图标 key 渲染，导致后台存汉字、

@@ -78,7 +78,7 @@ node tools/deploy-config-test.js
    `WebConfig` 不再转发 pc 目录。改游客端时桌面（≥900px）与手机两种断点都要看。
 2. **四主题**：`red / cyan / dark / blue`。`themes.css` 替代了旧 `theme-dark.css`。
    深色令牌 `--bg: #171412`（不是旧版的 `#151A18`）。
-3. **视觉资源全部重绘**：`tools/make-art.js` 生成 `assets/img/art/` 下 90 张场景插画
+3. **视觉资源**：点位 / 商品 / 活动的配图使用 `assets/img/photo/` 下的真实照片（38 个主题 × 3 张），其余图标与虚拟地图底图由 `tools/make-art.js` 生成到 `assets/img/art/`
    （14 点位 + 16 商品，各 3 张图集：白昼 / 黄昏 / 暮色）+ logo / 头像 / 图标 sprite。
    旧 `assets/img/photos/*.jpg` 已删除。改美术改生成器再重跑，别手改生成物。
 4. **charts.js** 组件名保持 `zq-line / zq-donut / zq-bars / zq-spark`（页面模板不用改），

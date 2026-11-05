@@ -38,7 +38,7 @@ public class ShopService {
     private static final int MAP_Y_MAX = 700;
 
     /** 新建商品未指定封面时的兜底图（必须与 static/assets/img/ 下的真实文件名一致） */
-    private static final String DEFAULT_COVER = "/assets/img/art/goods-huanghua.svg";
+    private static final String DEFAULT_COVER = "/assets/img/photo/goods-huanghua.jpg";
 
     /** 分类默认场次/时段：商品没配 timeSlots 时用它兜底，保证用户总有得选 */
     private static final Map<String, List<String>> DEFAULT_SLOTS = Map.of(

@@ -1161,9 +1161,9 @@
       cover: function (cover, category) {
         if (cover) { return this.asset(cover); }
         // 兜底用同一套写实照片，别再退回插画，否则新旧视觉会混在一起
-        var fb = { goods: '/assets/img/art/goods-huanghua.svg', study: '/assets/img/art/spot-study.svg',
-                   homestay: '/assets/img/art/goods-room.svg', experience: '/assets/img/art/goods-pick.svg' };
-        return this.asset(fb[category] || '/assets/img/art/spot-service.svg');
+        var fb = { goods: '/assets/img/photo/goods-huanghua.jpg', study: '/assets/img/photo/spot-study.jpg',
+                   homestay: '/assets/img/photo/goods-room.jpg', experience: '/assets/img/photo/goods-pick.jpg' };
+        return this.asset(fb[category] || '/assets/img/photo/spot-service.jpg');
       },
 
       /**

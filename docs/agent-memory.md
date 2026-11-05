@@ -71,7 +71,7 @@
   （2026-10-31，map-picking-and-ui-fixes）
 ## 视觉资源
 
-- `assets/img/art/` 下所有插画由 `tools/make-art.js` 生成，**不要手改生成的 SVG**
+- `assets/img/art/` 下只保留生成型图形（map-village.svg + 品牌件），由 `tools/make-art.js` 生成，**不要手改生成的 SVG**；点位/商品/活动配图是 `assets/img/photo/` 下的真实照片
   （下次重跑会被覆盖）。要改构图或配色改生成器再重跑。（2026-10-31，agri-tourism-revamp）
 - 主题四色 `red / cyan / dark / blue`，只覆盖设计令牌；`red` 是默认主题，
   `DTTheme.set('red')` 会把 `data-theme` 属性**移除**，这是正常行为不是 bug。
@@ -86,7 +86,7 @@
   `deploy-config-test.js` → `normalize-scripts.js --check`。自检失败禁止提交，
   不得为了让检查通过而删改断言。（2026-10-31，agri-tourism-revamp）
 - `smoke-test.js` 会扫描静态资源里的图片引用存在性，**文档/占位符里写
-  `/assets/img/art/xxx.svg` 会被当成真实引用**，写示例路径要指向确实存在的文件。
+  `/assets/img/photo/xxx.jpg` 会被当成真实引用**，写示例路径要指向确实存在的文件（photo/ 下是 114 张照片，art/ 下只剩 map-village.svg）。
   （2026-10-31，agri-tourism-revamp）
 - `browser-check.js` 会把截图写到 `docs/screenshots/`，改完 UI 可以直接看这些图复核。
   （2026-10-31，agri-tourism-revamp）
@@ -133,3 +133,11 @@
   （2026-10-31，agri-tourism-revamp）
 - 仓库远端是 https://github.com/spsCiallo/datong-ai-platform ，走代理 `127.0.0.1:7897`；
   首次推送用 `main` 作为默认分支。（2026-10-31，agri-tourism-revamp）
+## 视觉与文档资源（2026-11-05，来源：2026-11-05-photo-and-thesis-materials.md）
+
+- 点位/商品/活动配图在 `assets/img/photo/`（114 张 JPEG，38 主题 × 3 张，1000×750）；`assets/img/art/` 只剩虚拟地图底图与品牌图形。
+- 换配图只需替换 photo 下的同名文件并保证 `db/seed.sql` 引用可解析；smoke-test 会递归校验所有图片引用（含 114 条）。
+- 论文用 `docs/build_thesis.py` 重建（不要手改 docx）；PPT 用 `docs/build_slides.py`；评语表用 `docs/build_review.py`。
+- 用 Word COM 统计 docx 页数前必须把文件复制到纯 ASCII 路径，中文路径会报「文档可能已损坏」。
+- python-docx 保存遇到 `PermissionError`  = Word 正开着该文件，关掉 Word 即可。
+- PowerShell `-File` 执行含中文路径的脚本时文件必须带 UTF-8 BOM，否则报 FileNotFoundException。

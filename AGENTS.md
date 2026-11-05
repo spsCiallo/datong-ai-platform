@@ -59,7 +59,7 @@
 - **数据库变更必须幂等**：`schema.sql` 只用 `CREATE TABLE IF NOT EXISTS`；
   `DatabaseBootstrap` 反复执行不得删除或覆盖已有数据。
   遵守既有表设计约定：表名复数、必带 `seq` 自增写入顺序列、时间字段用
-  VARCHAR、图片只存相对路径（本版插画在 `/assets/img/art/`）。
+  VARCHAR、图片只存相对路径（本版实景照片在 `/assets/img/photo/`，虚拟地图底图在 `/assets/img/art/`）。
 - **AI 功能必须可降级**：未配置密钥或第三方接口失败时，自动落回本地
   `knowledge` 知识库，全流程不得向用户报错。新增 AI 能力同样要有兜底。
 
@@ -74,10 +74,14 @@
   四主题 `red / cyan / dark / blue`，只覆盖设计令牌。
   主题脚本必须在 `<head>` 同步引入（防首屏白闪）。
   图表配色实时读 CSS 变量（`assets/js/charts.js`），切主题自动重绘。
-- 视觉资源由 `tools/make-art.js` 生成（`assets/img/art/` 下的插画、
-  logo / favicon / hero / 头像 / 图标 sprite）。改构图或配色改生成器再重跑，
-  **不要手工改生成的 SVG**（下次重跑会被覆盖）。
-- 新增图片资源放 `static/assets/img/art/`，并保证被 smoke-test 的
+- 视觉资源分两类：**点位 / 商品 / 活动的配图是真实照片**，放在
+  `assets/img/photo/`（每个主题 `<base>.jpg` / `<base>-b.jpg` / `<base>-c.jpg`
+  三张同源不同景别，1000×750，换图请重新裁切，不要放程序化插画）；
+  其余程序化图形资产（虚拟地图底图 `assets/img/art/map-village.svg`、
+  logo / favicon / hero / 头像 / 图标 sprite）由 `tools/make-art.js` 生成。
+  改构图或配色改生成器再重跑，**不要手工改生成的 SVG**（下次重跑会被覆盖）。
+- 新增图片资源放 `static/assets/img/photo/`（实景照片）或
+  `static/assets/img/art/`（生成图形），并保证被 smoke-test 的
   「图片引用存在性」静态检查覆盖到（该检查会递归扫描 img 目录）。
 
 ## 五、改完必须自检（提交前顺序执行）
